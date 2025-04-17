@@ -1,16 +1,12 @@
 import streamlit as st
 
-# Page configuration
 st.set_page_config(page_title="Interactive Medical Segmentation Overview", layout="wide")
 
-# Main title
 st.title("Interactive Medical Image Segmentation: Transformer vs. CNN")
 
-# Sidebar navigation
 st.sidebar.header("Navigation")
 page = st.sidebar.radio("Go to", ["Background", "Technique Comparison", "iSegFormer Model", "Demo", "References"])
 
-# Content for each page
 if page == "Background":
     st.header("Project Background")
     st.markdown(
@@ -22,10 +18,10 @@ When addressing **"How can interactive segmentation help doctors diagnose faster
 
 Key papers discussed:
 
-1. **iSegFormer** – Liu *et al.* (2022)
-2. **UNet + Spatial Attention** – Zhang *et al.* (2021)
+1. **iSegFormer** – Liu *et al.* (2022)  
+2. **UNet + Spatial Attention** – Zhang *et al.* (2021)  
 3. **SimpleClick** – Liu *et al.* (2023)
-        """
+"""
     )
 
 elif page == "Technique Comparison":
@@ -74,9 +70,13 @@ The GIF below demonstrates click‑based interaction with **SimpleClick**:
     gif_url = "https://github.com/uncbiag/SimpleClick/raw/v1.0/assets/demo_sheep.gif"
     st.image(gif_url, caption="SimpleClick click‑based segmentation", use_container_width=True)
     st.markdown(
-        "Run locally with:\n```
+        """
+**Run locally with**
+
+```bash
 python3 demo.py --checkpoint ./weights/simpleclick_models/cocolvis_vit_huge.pth --gpu 0
-```"
+```
+"""
     )
 
 elif page == "References":
@@ -108,7 +108,6 @@ elif page == "References":
 """
     )
 
-# Footer
 st.markdown(
     "---\n*Page built from iSegFormer (v1.0) and SimpleClick examples. Author: **Yusen Liu***"
 )
