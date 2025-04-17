@@ -1,105 +1,130 @@
 import streamlit as st
+import subprocess, sys, os, pathlib, tempfile, uuid
+from PIL import Image
 
-# 页面配置
-st.set_page_config(page_title="SimpleClick: Interactive Segmentation Demo", layout="wide")
+# ------------------------------------------------------------------
+# Add local SimpleClick to PYTHONPATH so that infer_simpleclick can import
+# ------------------------------------------------------------------
+ROOT = pathlib.Path(__file__).resolve().parent
+sys.path.append(str(ROOT / "SimpleClick"))
 
-# 标题和项目链接
-st.title("SimpleClick: Interactive Image Segmentation Demo")
-st.markdown(
-    """
-**SimpleClick** 是基于简单 Vision Transformer 的交互式图像分割方法，于 ICCV 2023 发表。
+# ------------------------------------------------------------------
+# Streamlit page configuration
+# ------------------------------------------------------------------
+st.set_page_config(page_title="Interactive Segmentation Demo", layout="wide")
 
-- 论文链接：[ICCV 2023 Paper](https://openaccess.thecvf.com/content/ICCV2023/html/Liu_SimpleClick_Interactive_Image_Segmentation_With_Simple_Vision_Transformers_ICCV_2023_paper.html)
-- 代码仓库：[SimpleClick v1.0 (GitHub)](https://github.com/uncbiag/SimpleClick/tree/v1.0)
-"""
-)
+st.title("Interactive Medical Image Segmentation: Transformer vs. CNN")
 
-# 侧边导航
-st.sidebar.header("导航")
-section = st.sidebar.radio("选择页面", ["简介", "示例演Demo", "安装指南", "使用方法", "引用"])
+# Sidebar navigation
+st.sidebar.header("Navigation")
+page = st.sidebar.radio("Go to", ["Background", "Technique Comparison", "iSegFormer Model", "Demo", "References"])
 
-if section == "简介":
-    st.header("方法简介")
+# ------------------------------ Pages ---------------------------------
+if page == "Background":
+    st.header("Project Background")
     st.markdown(
         """
-SimpleClick 结合了简洁的 Vision Transformer 架构和 BRS 交互策略，支持点击式前后台提示，生成高质量分割结果。架构图如下：
-"""
-    )
-    framework_url = "https://github.com/uncbiag/SimpleClick/raw/v1.0/assets/simpleclick_framework.png"
-    st.image(framework_url, caption="SimpleClick 架构示意图", use_column_width=True)
+We explore **how interactive segmentation accelerates and improves medical diagnosis** by contrasting two paradigms:
 
-elif section == "示例演Demo":
-    st.header("交互式分割演示")
-    st.markdown(
-        """
-下面是一个示例演示 GIF：
-"""
-    )
-    demo_url = "https://github.com/uncbiag/SimpleClick/raw/v1.0/assets/demo_sheep.gif"
-    st.image(demo_url, caption="点击式分割示例 (Demo Sheep)", use_column_width=True)
-    st.markdown(
-        """
-本地运行示例：
-```bash
-python3 demo.py --checkpoint=./weights/simpleclick_models/cocolvis_vit_huge.pth --gpu 0
-```"""
-    )
+* **Fully automatic segmentation** (CNN‑based, no clicks)
+* **Interactive segmentation** (Transformer‑based, few user clicks)
 
-elif section == "安装指南":
-    st.header("安装环境与依赖")
-    st.markdown(
-        """
-```bash
-# 克隆仓库
-git clone https://github.com/uncbiag/SimpleClick.git
-cd SimpleClick
-# 安装依赖
-pip3 install -r requirements.txt
-# （可选）配置 CUDA 驱动与 Docker
-```"""
-    )
-    st.markdown(
-        """
-依赖示例：Python3.8.8、PyTorch1.11.0、CUDA11.0 + torchvision。建议使用虚拟环境管理。
+Key papers analysed:
+1. *iSegFormer* — Liu *et al.* 2022  
+2. *UNet + Spatial Attention* — Zhang *et al.* 2021  
+3. *SimpleClick* — Liu *et al.* 2023
 """
     )
 
-elif section == "使用方法":
-    st.header("训练与评估")
-    st.markdown(
-        """
-```bash
-# 训练模型示例（Huge 模型）
-python train.py models/iter_mask/plainvit_huge448_cocolvis_itermask.py \
-  --batch-size=32 --ngpus=4
+elif page == "Technique Comparison":
+    st.header("Automatic vs. Interactive Segmentation")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("Fully Automatic (UNet + Attention)")
+        st.markdown("- Batch processing, stable\n- No human input, less flexible\n- Example: Zhang 2021")
+    with col2:
+        st.subheader("Interactive (Click‑based)")
+        st.markdown("- Few clicks refine mask\n- High accuracy with sparse labels\n- Examples: iSegFormer, SimpleClick")
 
-# 评估模型
-python scripts/evaluate_model.py NoBRS --gpu=0 \
-  --checkpoint=./weights/simpleclick_models/cocolvis_vit_huge.pth \
-  --eval-mode=cvpr --datasets=GrabCut,Berkeley,...
-```"""
-    )
-    st.markdown(
-        "更多使用细节请参考 `config.yml` 和项目 README。"
-    )
+elif page == "iSegFormer Model":
+    st.header("Inside iSegFormer")
+    st.markdown("- **Core**: Swin Transformer encoder + MLP decoder\n- **Highlights**: memory‑efficient, slice propagation, good with limited data")
+    st.image("https://raw.githubusercontent.com/uncbiag/iSegFormer/v1.0/figures/demo_gui.png", caption="iSegFormer interactive GUI", use_container_width=True)
 
-elif section == "引用":
-    st.header("引用格式")
+elif page == "Demo":
+    st.header("SimpleClick Online Demo")
+    st.markdown("Upload a medical image (PNG/JPG) and run SimpleClick inference right in the browser.")
+
+    uploaded = st.file_uploader("Choose image", type=["png","jpg","jpeg"])
+    gpu_flag = st.checkbox("Use GPU (if available)", value=False)
+
+    if uploaded:
+        img = Image.open(uploaded).convert("RGB")
+        st.image(img, caption="Input image", use_container_width=True)
+
+        # save to temp
+        tmp_dir = tempfile.mkdtemp()
+        img_path = os.path.join(tmp_dir, f"{uuid.uuid4()}.png")
+        img.save(img_path)
+
+        if st.button("Run SimpleClick demo"):
+            st.info("Running inference … please wait for the first time (weights may be downloaded).")
+            ckpt_path = "./weights/simpleclick_models/cocolvis_vit_huge.pth"
+            cmd = [
+                "python3", "infer_simpleclick.py",
+                "--input", img_path,
+                "--output", tmp_dir,
+                "--checkpoint", ckpt_path,
+                "--model-name", "vit_huge",
+            ]
+            if gpu_flag:
+                cmd += ["--gpu", "0"]
+            else:
+                cmd += ["--gpu", "-1"]
+
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            if result.returncode != 0:
+                st.error("Inference failed:\n" + result.stderr)
+            else:
+                # find overlay image
+                overlay_file = None
+                for f in os.listdir(tmp_dir):
+                    if f.endswith("_overlay.png"):
+                        overlay_file = os.path.join(tmp_dir, f)
+                        break
+                if overlay_file and os.path.exists(overlay_file):
+                    st.image(overlay_file, caption="Segmentation Result", use_container_width=True)
+                else:
+                    st.warning("Inference finished but overlay not found. Check server logs.")
+    else:
+        st.info("Please upload an image.")
+
+elif page == "References":
+    st.header("References")
     st.markdown(
-        """
-```bibtex
-@InProceedings{Liu_2023_ICCV,
-    author    = {Liu, Qin and Xu, Zhenlin and Bertasius, Gedas and Niethammer, Marc},
-    title     = {SimpleClick: Interactive Image Segmentation with Simple Vision Transformers},
-    booktitle = {Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
-    month     = {October},
-    year      = {2023},
-    pages     = {22290-22300}
+        """```bibtex
+@inproceedings{Liu2022_iSegFormer,
+  author    = {Liu, Qin and others},
+  title     = {iSegFormer: Interactive Segmentation for 3D Knee MRI},
+  booktitle = {MICCAI},
+  year      = {2022}
+}
+
+@article{Zhang2021_UNetAttention,
+  author  = {Zhang, ...},
+  title   = {CNN-Based Fully Automated Segmentation with Spatial Attention},
+  journal = {IEEE Trans. Med. Imaging},
+  year    = {2021}
+}
+
+@inproceedings{Liu2023_SimpleClick,
+  author    = {Liu, Qin and others},
+  title     = {SimpleClick: Interactive Image Segmentation with Simple Vision Transformers},
+  booktitle = {ICCV},
+  year      = {2023}
 }
 ```"""
     )
 
-# 底部版权信息
-st.markdown(
-    "---\n*本页面基于 [SimpleClick](https://github.com/uncbiag/SimpleClick/tree/v1.0) 项目构建，作者：Qin Liu 等。*"
-)
+# Footer
+st.markdown("---\n*Demo built with SimpleClick & iSegFormer. Author: **Yusen Liu***")
