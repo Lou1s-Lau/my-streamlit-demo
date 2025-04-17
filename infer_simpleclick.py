@@ -1,83 +1,97 @@
 #!/usr/bin/env python3
-# infer_simpleclick.py
-"""
-Run SimpleClick inference on a single image and save an overlay result.
+"""infer_simpleclick.py  (Google‑Drive version)
+-------------------------------------------------
+Headless inference for **SimpleClick** that automatically downloads the
+ViT‑Huge checkpoint from Google Drive when missing.
 
-示例（CPU）:
+Usage example (CPU):
     python3 infer_simpleclick.py \
         --input ./sample.jpg \
         --output ./results \
         --checkpoint ./weights/simpleclick_models/cocolvis_vit_huge.pth \
         --gpu -1
-"""
-import sys, os, pathlib
-sys.path.append(os.path.join(pathlib.Path(__file__).resolve().parent, 'SimpleClick'))
 
-import argparse
+*Default behaviour* uses **one centre positive click** just to show the
+end‑to‑end pipeline; integrate your own click list in Streamlit for true
+interactive mode.
+"""
+
+# ------------------------- standard libs --------------------------
+import argparse, sys, os, pathlib, shutil
 from pathlib import Path
 
-import cv2
-import numpy as np
-import torch
-from PIL import Image
+# ------------------------- third‑party ----------------------------
+import cv2, numpy as np, torch, gdown   # ensure gdown in requirements.txt
 
-# SimpleClick / RITM imports
-from isegm.inference import utils as pred_utils
-from isegm.inference.clicker import Clicker, Click
-from isegm.utils.vis import draw_with_blend_and_contour  # Simple visualiser
+# ------------------------- local import ---------------------------
+ROOT = pathlib.Path(__file__).resolve().parent
+sys.path.append(str(ROOT / "SimpleClick"))
+
+from isegm.inference import utils as pred_utils        # type: ignore
+from isegm.inference.clicker import Clicker, Click    # type: ignore
+from isegm.utils.vis import draw_with_blend_and_contour  # type: ignore
+
+# --------------------------------------------------
+# Map filename → Google Drive **file id** (not full URL)
+# --------------------------------------------------
+WEIGHT_IDS = {
+    "cocolvis_vit_huge.pth": "1kMHYLPC8uKaCpiuF3kfrlFQK6LyOpXKZ",
+    # add more ids if needed
+}
 
 
-def parse_args():
-    p = argparse.ArgumentParser(description="SimpleClick one‑shot inference")
-    p.add_argument("--input", required=True, help="Path to input PNG/JPG")
-    p.add_argument("--output", required=True, help="Folder to save overlay")
-    p.add_argument("--checkpoint", required=True, help="Path to .pth weights")
-    p.add_argument("--gpu", type=int, default=-1, help="GPU id (‑1 = CPU)")
-    return p.parse_args()
+def ensure_weights(path: Path):
+    """Download weight file from Google Drive if it is absent."""
+    if path.exists():
+        return
+    file_id = WEIGHT_IDS.get(path.name)
+    if file_id is None:
+        raise ValueError(f"No Google‑Drive id for {path.name}. Please update WEIGHT_IDS.")
+    url = f"https://drive.google.com/uc?export=download&id={file_id}"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    print(f"[infer_simpleclick] Downloading {path.name} …")
+    gdown.download(url, str(path), quiet=False)
+    print("[infer_simpleclick] Done →", path)
+
+
+def build_argparser():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--input", required=True, help="input PNG/JPG")
+    ap.add_argument("--output", required=True, help="output folder")
+    ap.add_argument("--checkpoint", required=True, help=".pth path")
+    ap.add_argument("--gpu", type=int, default=-1, help="GPU id, -1=CPU")
+    ap.add_argument("--model-name", default="vit_huge", choices=["vit_huge"], help="match weight type")
+    return ap
 
 
 def main():
-    args = parse_args()
+    args = build_argparser().parse_args()
+
+    ckpt = Path(args.checkpoint)
+    ensure_weights(ckpt)
 
     device = f"cuda:{args.gpu}" if args.gpu >= 0 and torch.cuda.is_available() else "cpu"
 
-    # -------------------------------------------------
-    # 1. 构建 predictor
-    # -------------------------------------------------
     predictor = pred_utils.get_predictor(
-        checkpoint_path=args.checkpoint,
-        model_name="vit_huge",          # 与权重对应的模型串 (SimpleClick 默认为 vit_huge)
+        checkpoint_path=str(ckpt),
+        model_name=args.model_name,
         device=device,
-        brs_mode="NoBRS",               # SimpleClick 论文和 demo 用 NoBRS
+        brs_mode="NoBRS",
     )
 
-    # -------------------------------------------------
-    # 2. 读取图像并设置到 predictor
-    # -------------------------------------------------
-    img_bgr = cv2.imread(args.input)                # H×W×3, BGR
+    img_bgr = cv2.imread(args.input)
     if img_bgr is None:
         raise FileNotFoundError(args.input)
-    predictor.set_input_image(img_bgr)
-
-    # -------------------------------------------------
-    # 3. 构造一次点击 (中心正点击示例)
-    # -------------------------------------------------
     h, w = img_bgr.shape[:2]
+
+    # one positive click in centre
     clicker = Clicker((h, w))
-    clicker.add_click(Click(y=h // 2, x=w // 2, is_positive=True))
+    clicker.add_click(Click(y=h//2, x=w//2, is_positive=True))
 
-    # -------------------------------------------------
-    # 4. 推理
-    # -------------------------------------------------
-    pred_mask, _ = predictor.get_prediction(clicker, prev_mask=None)  # H×W float
-    bin_mask = (pred_mask > 0).astype(np.uint8)                        # 0/1
+    mask, _ = predictor.get_prediction(clicker, prev_mask=None)
+    overlay = draw_with_blend_and_contour(img_bgr, (mask > 0).astype(np.uint8))
 
-    # -------------------------------------------------
-    # 5. 叠加可视化并保存
-    # -------------------------------------------------
-    overlay = draw_with_blend_and_contour(img_bgr, bin_mask)
-    out_dir = Path(args.output)
-    out_dir.mkdir(parents=True, exist_ok=True)
+    out_dir = Path(args.output); out_dir.mkdir(parents=True, exist_ok=True)
     out_path = out_dir / f"{Path(args.input).stem}_overlay.png"
     cv2.imwrite(str(out_path), overlay)
     print("Saved overlay to", out_path)
