@@ -90,13 +90,11 @@ def parse_args():
     p.add_argument("--output", required=True, help="Folder to save overlay")
     p.add_argument("--checkpoint", required=True, help="Path to .pth weights")
     p.add_argument("--gpu", type=int, default=-1, help="GPU id (‑1 = CPU)")
->>>>>>> 62ddd49e922b94ebafaddb171b68fe702639a06d
     return p.parse_args()
 
 
 def main():
     args = parse_args()
-<<<<<<< HEAD
     ckpt = Path(args.checkpoint)
     ensure_checkpoint(ckpt)
 
@@ -127,7 +125,6 @@ def main():
     out_file = out_dir / f"{Path(args.input).stem}_overlay.png"
     cv2.imwrite(str(out_file), overlay)
     print(f"Saved overlay to {out_file}")
-=======
 
     device = f"cuda:{args.gpu}" if args.gpu >= 0 and torch.cuda.is_available() else "cpu"
 
@@ -171,7 +168,6 @@ def main():
     out_path = out_dir / f"{Path(args.input).stem}_overlay.png"
     cv2.imwrite(str(out_path), overlay)
     print("Saved overlay to", out_path)
->>>>>>> 62ddd49e922b94ebafaddb171b68fe702639a06d
 
 
 if __name__ == "__main__":
