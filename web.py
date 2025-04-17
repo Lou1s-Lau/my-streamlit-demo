@@ -127,8 +127,5 @@ elif page == "References":
     )
 
 # Footer
-<<<<<<< HEAD
 st.markdown("---\n*Demo built with SimpleClick & iSegFormer. Author: **Yusen Liu***")
-=======
-st.markdown("---\n*Demo built with SimpleClick & iSegFormer. Author: **Yusen Liu***")
->>>>>>> 62ddd49e922b94ebafaddb171b68fe702639a06d
+
