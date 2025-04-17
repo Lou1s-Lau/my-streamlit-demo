@@ -1,126 +1,130 @@
-#!/usr/bin/env python3
-"""infer_simpleclick.py
----------------------------------
-Run **SimpleClick** inference on a single image and save an overlay
-(original image blended with the predicted mask).
+import streamlit as st
+import subprocess, sys, os, pathlib, tempfile, uuid
+from PIL import Image
 
-This script is *headless* (no GUI) and is therefore suitable for
-calling from a Streamlit backend or any batch pipeline.
+# ------------------------------------------------------------------
+# Add local SimpleClick to PYTHONPATH so that infer_simpleclick can import
+# ------------------------------------------------------------------
+ROOT = pathlib.Path(__file__).resolve().parent
+sys.path.append(str(ROOT / "SimpleClick"))
 
-Example (CPU):
-    python3 infer_simpleclick.py \
-        --input ./sample.jpg \
-        --output ./results \
-        --checkpoint ./weights/simpleclick_models/cocolvis_vit_huge.pth \
-        --gpu -1
+# ------------------------------------------------------------------
+# Streamlit page configuration
+# ------------------------------------------------------------------
+st.set_page_config(page_title="Interactive Segmentation Demo", layout="wide")
 
-Key points
------------
-* If the checkpoint file does **not** exist, it will be downloaded
-  automatically from the corresponding HuggingFace URL.
-* A **single centre positive click** is generated just to demonstrate
-  end‑to‑end inference. When integrating with Streamlit you can pass
-  arbitrary click lists instead.
-* We import SimpleClick/isegm directly from the *local* `SimpleClick/`
-  folder shipped with your repo.  No need to `pip install` the package.
+st.title("Interactive Medical Image Segmentation: Transformer vs. CNN")
+
+# Sidebar navigation
+st.sidebar.header("Navigation")
+page = st.sidebar.radio("Go to", ["Background", "Technique Comparison", "iSegFormer Model", "Demo", "References"])
+
+# ------------------------------ Pages ---------------------------------
+if page == "Background":
+    st.header("Project Background")
+    st.markdown(
+        """
+We explore **how interactive segmentation accelerates and improves medical diagnosis** by contrasting two paradigms:
+
+* **Fully automatic segmentation** (CNN‑based, no clicks)
+* **Interactive segmentation** (Transformer‑based, few user clicks)
+
+Key papers analysed:
+1. *iSegFormer* — Liu *et al.* 2022  
+2. *UNet + Spatial Attention* — Zhang *et al.* 2021  
+3. *SimpleClick* — Liu *et al.* 2023
 """
+    )
 
-# -------- standard libs --------
-import argparse
-import os, sys, pathlib, urllib.request, shutil
-from pathlib import Path
+elif page == "Technique Comparison":
+    st.header("Automatic vs. Interactive Segmentation")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("Fully Automatic (UNet + Attention)")
+        st.markdown("- Batch processing, stable\n- No human input, less flexible\n- Example: Zhang 2021")
+    with col2:
+        st.subheader("Interactive (Click‑based)")
+        st.markdown("- Few clicks refine mask\n- High accuracy with sparse labels\n- Examples: iSegFormer, SimpleClick")
 
-# -------- third‑party --------
-import cv2
-import numpy as np
-import torch
+elif page == "iSegFormer Model":
+    st.header("Inside iSegFormer")
+    st.markdown("- **Core**: Swin Transformer encoder + MLP decoder\n- **Highlights**: memory‑efficient, slice propagation, good with limited data")
+    st.image("https://raw.githubusercontent.com/uncbiag/iSegFormer/v1.0/figures/demo_gui.png", caption="iSegFormer interactive GUI", use_container_width=True)
 
-# -------- make local SimpleClick importable --------
-PROJ_ROOT = pathlib.Path(__file__).resolve().parent
-SIMPLECLICK_DIR = PROJ_ROOT / "SimpleClick"
-sys.path.append(str(SIMPLECLICK_DIR))
+elif page == "Demo":
+    st.header("SimpleClick Online Demo")
+    st.markdown("Upload a medical image (PNG/JPG) and run SimpleClick inference right in the browser.")
 
-# -------- now import SimpleClick helper libs --------
-from isegm.inference import utils as pred_utils       # type: ignore
-from isegm.inference.clicker import Clicker, Click   # type: ignore
-from isegm.utils.vis import draw_with_blend_and_contour  # type: ignore
+    uploaded = st.file_uploader("Choose image", type=["png","jpg","jpeg"])
+    gpu_flag = st.checkbox("Use GPU (if available)", value=False)
 
-# Map filename → official download URL (HuggingFace release)
-WEIGHT_URLS = {
-    "cocolvis_vit_huge.pth": "https://huggingface.co/uncbiag/SimpleClick/resolve/main/cocolvis_vit_huge.pth",
-    "cocolvis_vit_base.pth": "https://huggingface.co/uncbiag/SimpleClick/resolve/main/cocolvis_vit_base.pth",
-    "cocolvis_vit_large.pth": "https://huggingface.co/uncbiag/SimpleClick/resolve/main/cocolvis_vit_large.pth",
+    if uploaded:
+        img = Image.open(uploaded).convert("RGB")
+        st.image(img, caption="Input image", use_container_width=True)
+
+        # save to temp
+        tmp_dir = tempfile.mkdtemp()
+        img_path = os.path.join(tmp_dir, f"{uuid.uuid4()}.png")
+        img.save(img_path)
+
+        if st.button("Run SimpleClick demo"):
+            st.info("Running inference … please wait for the first time (weights may be downloaded).")
+            ckpt_path = "./weights/simpleclick_models/cocolvis_vit_huge.pth"
+            cmd = [
+                "python3", "infer_simpleclick.py",
+                "--input", img_path,
+                "--output", tmp_dir,
+                "--checkpoint", ckpt_path,
+                "--model-name", "vit_huge",
+            ]
+            if gpu_flag:
+                cmd += ["--gpu", "0"]
+            else:
+                cmd += ["--gpu", "-1"]
+
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            if result.returncode != 0:
+                st.error("Inference failed:\n" + result.stderr)
+            else:
+                # find overlay image
+                overlay_file = None
+                for f in os.listdir(tmp_dir):
+                    if f.endswith("_overlay.png"):
+                        overlay_file = os.path.join(tmp_dir, f)
+                        break
+                if overlay_file and os.path.exists(overlay_file):
+                    st.image(overlay_file, caption="Segmentation Result", use_container_width=True)
+                else:
+                    st.warning("Inference finished but overlay not found. Check server logs.")
+    else:
+        st.info("Please upload an image.")
+
+elif page == "References":
+    st.header("References")
+    st.markdown(
+        """```bibtex
+@inproceedings{Liu2022_iSegFormer,
+  author    = {Liu, Qin and others},
+  title     = {iSegFormer: Interactive Segmentation for 3D Knee MRI},
+  booktitle = {MICCAI},
+  year      = {2022}
 }
 
+@article{Zhang2021_UNetAttention,
+  author  = {Zhang, ...},
+  title   = {CNN-Based Fully Automated Segmentation with Spatial Attention},
+  journal = {IEEE Trans. Med. Imaging},
+  year    = {2021}
+}
 
-def download_checkpoint(ckpt_path: Path):
-    """Download weights if missing."""
-    fname = ckpt_path.name
-    url = WEIGHT_URLS.get(fname)
-    if url is None:
-        raise ValueError(f"No default URL for checkpoint '{fname}'. Please update WEIGHT_URLS dict.")
-
-    ckpt_path.parent.mkdir(parents=True, exist_ok=True)
-    print(f"[infer_simpleclick] Downloading {fname} …")
-    with urllib.request.urlopen(url) as resp, open(ckpt_path, "wb") as out_file:
-        shutil.copyfileobj(resp, out_file)
-    print("[infer_simpleclick] Download complete →", ckpt_path)
-
-
-def parse_args():
-    p = argparse.ArgumentParser(description="SimpleClick one‑shot inference (no GUI)")
-    p.add_argument("--input", required=True, help="Path to input PNG/JPG")
-    p.add_argument("--output", required=True, help="Directory to save overlay result")
-    p.add_argument("--checkpoint", required=True, help="Path to .pth model weights")
-    p.add_argument("--gpu", type=int, default=-1, help="GPU id; -1 = CPU")
-    p.add_argument("--model-name", default="vit_huge", help="Model tag (vit_huge / vit_large / vit_base)")
-    return p.parse_args()
-
-
-def main():
-    args = parse_args()
-
-    ckpt_path = Path(args.checkpoint)
-    if not ckpt_path.exists():
-        download_checkpoint(ckpt_path)
-
-    device = (
-        f"cuda:{args.gpu}"
-        if args.gpu >= 0 and torch.cuda.is_available()
-        else "cpu"
+@inproceedings{Liu2023_SimpleClick,
+  author    = {Liu, Qin and others},
+  title     = {SimpleClick: Interactive Image Segmentation with Simple Vision Transformers},
+  booktitle = {ICCV},
+  year      = {2023}
+}
+```"""
     )
 
-    # Build predictor
-    predictor = pred_utils.get_predictor(
-        checkpoint_path=str(ckpt_path),
-        model_name=args.model_name,  # must match weight type
-        device=device,
-        brs_mode="NoBRS",
-    )
-
-    # Load image (BGR as required by predictor)
-    img_bgr = cv2.imread(args.input)
-    if img_bgr is None:
-        raise FileNotFoundError(args.input)
-    h, w = img_bgr.shape[:2]
-
-    # Generate a dummy click: centre, positive
-    clicker = Clicker((h, w))
-    clicker.add_click(Click(y=h // 2, x=w // 2, is_positive=True))
-
-    # Inference
-    pred_mask, _ = predictor.get_prediction(clicker, prev_mask=None)
-    bin_mask = (pred_mask > 0).astype(np.uint8)
-
-    # Visualise overlay
-    overlay = draw_with_blend_and_contour(img_bgr, bin_mask)
-
-    out_dir = Path(args.output)
-    out_dir.mkdir(parents=True, exist_ok=True)
-    out_file = out_dir / f"{Path(args.input).stem}_overlay.png"
-    cv2.imwrite(str(out_file), overlay)
-    print("Saved overlay to", out_file)
-
-
-if __name__ == "__main__":
-    main()
+# Footer
+st.markdown("---\n*Demo built with SimpleClick & iSegFormer. Author: **Yusen Liu***")
