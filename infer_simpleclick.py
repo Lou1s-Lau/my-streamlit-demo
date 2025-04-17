@@ -56,7 +56,6 @@ def parse_args():
     p.add_argument("--output", required=True, help="Directory to save overlay")
     p.add_argument("--checkpoint", required=True, help="Path to .pth checkpoint")
     p.add_argument("--gpu", type=int, default=-1, help="GPU id (>=0) or -1 for CPU")
-=======
 # infer_simpleclick.py
 """
 Run SimpleClick inference on a single image and save an overlay result.
