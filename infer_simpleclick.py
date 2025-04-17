@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-<<<<<<< HEAD
 """infer_simpleclick.py  (Google Drive auto-download)
 ------------------------------------------------
 Headless inference for **SimpleClick** using ViT-Huge.
