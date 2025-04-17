@@ -1,105 +1,110 @@
 import streamlit as st
 
 # 页面配置
-st.set_page_config(page_title="SimpleClick: Interactive Segmentation Demo", layout="wide")
+st.set_page_config(page_title="Interactive Medical Segmentation Overview", layout="wide")
 
-# 标题和项目链接
-st.title("SimpleClick: Interactive Image Segmentation Demo")
-st.markdown(
-    """
-**SimpleClick** 是基于简单 Vision Transformer 的交互式图像分割方法，于 ICCV 2023 发表。
-
-- 论文链接：[ICCV 2023 Paper](https://openaccess.thecvf.com/content/ICCV2023/html/Liu_SimpleClick_Interactive_Image_Segmentation_With_Simple_Vision_Transformers_ICCV_2023_paper.html)
-- 代码仓库：[SimpleClick v1.0 (GitHub)](https://github.com/uncbiag/SimpleClick/tree/v1.0)
-"""
-)
+# 顶部标题
+st.title("基于 Transformer 与 CNN 的交互式医学图像分割比较与演示")
 
 # 侧边导航
 st.sidebar.header("导航")
-section = st.sidebar.radio("选择页面", ["简介", "示例演Demo", "安装指南", "使用方法", "引用"])
+page = st.sidebar.radio("选择页面", ["项目背景", "技术对比", "iSegFormer 模型", "Demo 演示", "参考文献"])
 
-if section == "简介":
-    st.header("方法简介")
+# 各页面内容
+if page == "项目背景":
+    st.header("项目背景")
     st.markdown(
         """
-SimpleClick 结合了简洁的 Vision Transformer 架构和 BRS 交互策略，支持点击式前后台提示，生成高质量分割结果。架构图如下：
+在回答“交互式分割如何帮助医生更快更准地诊断？”这一问题时，我们参考了多篇研究，从自动分割与交互式分割两种技术方向进行对比，探讨 AI 在医学图像处理中的应用。
+
+- **自动分割**：依赖 CNN 等模型无人工干预。
+- **交互式分割**：结合医生点击/标注与模型推理，提高准确性与灵活性。
+
+本文重点分析了以下方法：
+1. iSegFormer (Liu et al., 2022)
+2. UNet + 空间注意力 (Zhang et al., 2021)
+3. SimpleClick (Liu et al., 2023)
+        """
+    )
+
+elif page == "技术对比":
+    st.header("自动分割 vs 交互式分割 对比")
+    st.beta_columns(2)
+    col1, col2 = st.beta_columns(2)
+    with col1:
+        st.subheader("自动分割 (UNet + Attention)")
+        st.markdown(
+            """
+- 无需人工干预，批量处理高效
+- 稳定性强，但对模糊边界鲁棒性差
+- 典型代表：Zhang et al. (2021)
+"""
+        )
+    with col2:
+        st.subheader("交互式分割 (点击式交互)")
+        st.markdown(
+            """
+- 医生可快速调整分割结果
+- 少量标注即可获得高精度
+- 典型代表：iSegFormer, SimpleClick
+"""
+        )
+
+elif page == "iSegFormer 模型":
+    st.header("iSegFormer 模型解析")
+    st.markdown(
+        """
+- **核心构建**：Swin Transformer 编码器 + 轻量 MLP 解码器
+- **特点**：内存高效、支持 3D 切片传播、少数据微调即可高精度
+- **应用**：膝关节 MRI 交互式分割
 """
     )
-    framework_url = "https://github.com/uncbiag/SimpleClick/raw/v1.0/assets/simpleclick_framework.png"
-    st.image(framework_url, caption="SimpleClick 架构示意图", use_column_width=True)
+    # 展示 iSegFormer GUI 演示截图
+    img_url = "https://raw.githubusercontent.com/uncbiag/iSegFormer/v1.0/figures/demo_gui.png"
+    st.image(img_url, caption="iSegFormer 交互式 GUI 示例", use_container_width=True)
 
-elif section == "示例演Demo":
-    st.header("交互式分割演示")
+elif page == "Demo 演示":
+    st.header("Demo 演示")
     st.markdown(
         """
-下面是一个示例演示 GIF：
+下面展示 SimpleClick 的交互式演示 GIF，供快速体验点击式标注的效果：
 """
     )
-    demo_url = "https://github.com/uncbiag/SimpleClick/raw/v1.0/assets/demo_sheep.gif"
-    st.image(demo_url, caption="点击式分割示例 (Demo Sheep)", use_column_width=True)
+    gif_url = "https://github.com/uncbiag/SimpleClick/raw/v1.0/assets/demo_sheep.gif"
+    st.image(gif_url, caption="SimpleClick 点击式分割示例", use_container_width=True)
     st.markdown(
-        """
-本地运行示例：
-```bash
-python3 demo.py --checkpoint=./weights/simpleclick_models/cocolvis_vit_huge.pth --gpu 0
-```"""
+        "`python3 demo.py --checkpoint=./weights/simpleclick_models/cocolvis_vit_huge.pth --gpu 0`"
     )
 
-elif section == "安装指南":
-    st.header("安装环境与依赖")
-    st.markdown(
-        """
-```bash
-# 克隆仓库
-git clone https://github.com/uncbiag/SimpleClick.git
-cd SimpleClick
-# 安装依赖
-pip3 install -r requirements.txt
-# （可选）配置 CUDA 驱动与 Docker
-```"""
-    )
-    st.markdown(
-        """
-依赖示例：Python3.8.8、PyTorch1.11.0、CUDA11.0 + torchvision。建议使用虚拟环境管理。
-"""
-    )
-
-elif section == "使用方法":
-    st.header("训练与评估")
-    st.markdown(
-        """
-```bash
-# 训练模型示例（Huge 模型）
-python train.py models/iter_mask/plainvit_huge448_cocolvis_itermask.py \
-  --batch-size=32 --ngpus=4
-
-# 评估模型
-python scripts/evaluate_model.py NoBRS --gpu=0 \
-  --checkpoint=./weights/simpleclick_models/cocolvis_vit_huge.pth \
-  --eval-mode=cvpr --datasets=GrabCut,Berkeley,...
-```"""
-    )
-    st.markdown(
-        "更多使用细节请参考 `config.yml` 和项目 README。"
-    )
-
-elif section == "引用":
-    st.header("引用格式")
+elif page == "参考文献":
+    st.header("参考文献")
     st.markdown(
         """
 ```bibtex
-@InProceedings{Liu_2023_ICCV,
-    author    = {Liu, Qin and Xu, Zhenlin and Bertasius, Gedas and Niethammer, Marc},
-    title     = {SimpleClick: Interactive Image Segmentation with Simple Vision Transformers},
-    booktitle = {Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
-    month     = {October},
-    year      = {2023},
-    pages     = {22290-22300}
+@InProceedings{Liu2022_iSegFormer,
+  author = {Liu, Qin and ...},
+  title = {iSegFormer: Interactive Segmentation for 3D Knee MRI},
+  booktitle = {MICCAI},
+  year = {2022}
+}
+
+@article{Zhang2021_UNetAttention,
+  author = {Zhang, ...},
+  title = {CNN-Based Fully Automated Segmentation with Spatial Attention},
+  journal = {IEEE Trans. Med. Imag.},
+  year = {2021}
+}
+
+@InProceedings{Liu2023_SimpleClick,
+  author = {Liu, Qin and ...},
+  title = {SimpleClick: Interactive Image Segmentation with Simple Vision Transformers},
+  booktitle = {ICCV},
+  year = {2023}
 }
 ```"""
     )
 
-# 底部版权信息
+# 底部说明
 st.markdown(
-    "---\n*本页面基于 [SimpleClick](https://github.com/uncbiag/SimpleClick/tree/v1.0) 项目构建，作者：Qin Liu 等。*"
+    "---\n*本页面基于 iSegFormer (v1.0) 与 SimpleClick 项目示例构建，用于展示交互式医学图像分割技术；作者：Meijia Wang*"
 )
