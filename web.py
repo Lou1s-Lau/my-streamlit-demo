@@ -47,6 +47,8 @@ if page == "Overview":
     3. **Sagittal (right):** Side slice highlighting cruciate ligaments and patellofemoral joint.  
     """)
 
+# …（前面部分保持不变，略）…
+
 # 2. Background
 elif page == "Background":
     st.title("Background: Deep Learning & Medical Image Segmentation")
@@ -96,10 +98,24 @@ elif page == "Background":
     - Fully automatic tools speed up routine tasks but can’t handle every patient’s unique anatomy.  
     - Interactive methods empower clinicians to **quickly refine** results in challenging cases, 
       improving diagnostic accuracy and saving time.
-
-    Below is a schematic comparison of the two workflows.
     """)
+    # 流程示意图
     load_asset("seg_pipeline.jpg", caption="Figure 2: Automated vs. Interactive Workflow")
+
+    # —— 在这里用 columns 并排放两张示意图 —— 
+    st.markdown("### Click‐Guidance Comparison")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("**Our Approach (Guided First‑Click)**")
+        img1 = os.path.join("SimpleClick-1.0", "assets", "c7b307a5-6aee-4a01-b89f-2e50ed42303c.png")
+        if os.path.exists(img1):
+            st.image(img1, use_container_width=True)
+        else:
+            st.warning(f"Image not found: {img1}")
+    with col2:
+        st.markdown("**Other Methods (All Clicks at Once)**")
+        img2 = os.path.join("SimpleClick-1.
+
 
 # 3. iSegFormer
 elif page == "iSegFormer":
