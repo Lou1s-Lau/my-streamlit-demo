@@ -99,28 +99,26 @@ elif page == "Background":
     - Interactive methods empower clinicians to **quickly refine** results in challenging cases, 
       improving diagnostic accuracy and saving time.
     """)
-    # 流程示意图
-    load_asset("seg_pipeline.jpg", caption="Figure 2: Automated vs. Interactive Workflow")
-
-    # —— 在这里用 columns 并排放两张示意图 —— 
-    st.markdown("### Click‐Guidance Comparison")
+# —— 左右两列并排放图 —— 
+    st.markdown("### 全自动 vs. 交互式 分割流程对比")
     col1, col2 = st.columns(2)
     with col1:
-        st.markdown("**Our Approach (Guided First‑Click)**")
-        img1 = os.path.join("SimpleClick-1.0", "assets", "c7b307a5-6aee-4a01-b89f-2e50ed42303c.png")
-        if os.path.exists(img1):
-            st.image(img1, use_container_width=True)
+        st.markdown("**全自动分割**")
+        img_auto = os.path.join("SimpleClick-1.0", "assets",
+                                "c7b307a5-6aee-4a01-b89f-2e50ed42303c.png")
+        if os.path.exists(img_auto):
+            st.image(img_auto, use_container_width=True)
         else:
-            st.warning(f"Image not found: {img1}")
-    with col2:
-        st.markdown("**Other Methods (All Clicks at Once)**")
-        img2 = os.path.join("SimpleClick-1.0", "assets", "596b2c09-4c7d-404d-8931-7eecbcbf8172.png")
-        if os.path.exists(img2):
-            st.image(img2, use_container_width=True)
-        else:
-            st.warning(f"Image not found: {img2}")
+            st.warning(f"找不到图像：{img_auto}")
 
-# …（后续 iSegFormer、Demo、References 部分保持不变）…
+    with col2:
+        st.markdown("**交互式分割**")
+        img_inter = os.path.join("SimpleClick-1.0", "assets",
+                                 "596b2c09-4c7d-404d-8931-7eecbcbf8172.png")
+        if os.path.exists(img_inter):
+            st.image(img_inter, use_container_width=True)
+        else:
+            st.warning(f"找不到图像：{img_inter}")
 
 
 
