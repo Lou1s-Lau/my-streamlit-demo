@@ -99,26 +99,28 @@ elif page == "Background":
     - Interactive methods empower clinicians to **quickly refine** results in challenging cases, 
       improving diagnostic accuracy and saving time.
     """)
-# —— 左右两列并排放图 —— 
-    st.markdown("### 全自动 vs. 交互式 分割流程对比")
+    # —— Side-by-side comparison: two columns for images —— 
+    st.markdown("### Fully Automatic vs. Interactive Segmentation Workflow")
     col1, col2 = st.columns(2)
+
     with col1:
-        st.markdown("**全自动分割**")
+        st.markdown("**Fully Automatic Segmentation**")
         img_auto = os.path.join("SimpleClick-1.0", "assets",
-                                "automatic.jpg")
+                                "c7b307a5-6aee-4a01-b89f-2e50ed42303c.png")
         if os.path.exists(img_auto):
             st.image(img_auto, use_container_width=True)
         else:
-            st.warning(f"找不到图像：{img_auto}")
+            st.warning(f"Image not found: {img_auto}")
 
     with col2:
-        st.markdown("**交互式分割**")
+        st.markdown("**Interactive Segmentation**")
         img_inter = os.path.join("SimpleClick-1.0", "assets",
-                                 "interactive.jpg")
+                                 "596b2c09-4c7d-404d-8931-7eecbcbf8172.png")
         if os.path.exists(img_inter):
             st.image(img_inter, use_container_width=True)
         else:
-            st.warning(f"找不到图像：{img_inter}")
+            st.warning(f"Image not found: {img_inter}")
+
 
 
 
