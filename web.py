@@ -118,10 +118,16 @@ elif page == "iSegFormer":
 # 4. Demo
 elif page == "Demo":
     st.title("Static Demo: Center‑Click Segmentation")
-    st.info("*This demo uses a single center click; full interactive version coming soon.*")
 
+    # —— 在这里插入视频播放器
+    video_path = os.path.join("SimpleClick-1.0", "assets", "demo_oaizib_stcn_with_cycle.mp4")
+    if os.path.exists(video_path):
+        st.video(video_path)
+    else:
+        st.warning(f"Demo video not found at {video_path}")
+
+    st.info("*This demo uses a single center click; full interactive version coming soon.*")
     uploaded = st.file_uploader("Upload an image", type=["jpg","jpeg","png"])
-    use_gpu = st.checkbox("Use GPU", value=False)
 
     if uploaded:
         tmp_dir = tempfile.mkdtemp()
