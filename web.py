@@ -106,7 +106,7 @@ elif page == "Background":
     with col1:
         st.markdown("**Fully Automatic Segmentation**")
         img_auto = os.path.join("SimpleClick-1.0", "assets",
-                                "automatic.jpg")
+                                "automatic.png")
         if os.path.exists(img_auto):
             st.image(img_auto, use_container_width=True)
         else:
@@ -115,7 +115,7 @@ elif page == "Background":
     with col2:
         st.markdown("**Interactive Segmentation**")
         img_inter = os.path.join("SimpleClick-1.0", "assets",
-                                 "interactive.jpg")
+                                 "interactive.png")
         if os.path.exists(img_inter):
             st.image(img_inter, use_container_width=True)
         else:
