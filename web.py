@@ -1,131 +1,139 @@
 import streamlit as st
-import subprocess, sys, os, pathlib, tempfile, uuid
 from PIL import Image
+import tempfile, subprocess, uuid, os
 
-# ------------------------------------------------------------------
-# Add local SimpleClick to PYTHONPATH so that infer_simpleclick can import
-# ------------------------------------------------------------------
-ROOT = pathlib.Path(__file__).resolve().parent
-sys.path.append(str(ROOT / "SimpleClick"))
+# 页面配置
+st.set_page_config(
+    page_title="Interactive Medical Image Segmentation",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
 
-# ------------------------------------------------------------------
-# Streamlit page configuration
-# ------------------------------------------------------------------
-st.set_page_config(page_title="Interactive Segmentation Demo", layout="wide")
+# 侧边栏导航
+st.sidebar.markdown("# 🏥 Medical AI")
+page = st.sidebar.radio("Navigate", [
+    "Overview", "Background", "iSegFormer", "SimpleClick", "Demo", "Installation"
+])
 
-st.title("Interactive Medical Image Segmentation: Transformer vs. CNN")
+# Helpers
+def load_asset(name, caption=None, width=700):
+    path = os.path.join("assets", name)
+    return st.image(path, caption=caption, use_column_width=True)
 
-# Sidebar navigation
-st.sidebar.header("Navigation")
-page = st.sidebar.radio("Go to", ["Background", "Technique Comparison", "iSegFormer Model", "Demo", "References"])
+# 1. Overview
+if page == "Overview":
+    st.title("Accelerating Clinical Diagnosis with Interactive Segmentation")
+    st.markdown("""
+    In modern radiology, doctors rely on **CT**, **MRI**, and other 3D/2D scans to spot abnormalities.
+    Advanced AI segmentation can automate this, but edge cases and fuzzy boundaries still pose challenges.
 
-# ------------------------------ Pages ---------------------------------
-if page == "Background":
-    st.header("Project Background")
-    st.markdown(
-        """
-We explore **how interactive segmentation accelerates and improves medical diagnosis** by contrasting two paradigms:
+    **Interactive segmentation** bridges the gap by letting the doctor **click** or **mark** areas of interest,
+    combining **AI speed** with **human expertise** for **higher accuracy**, **lower workload**, and **faster decisions**.
+    """)
+    load_asset("mri_example.jpg", caption="Figure 1: Knee MRI scan")
 
-* **Fully automatic segmentation** (CNN‑based, no clicks)
-* **Interactive segmentation** (Transformer‑based, few user clicks)
+# 2. Background
+elif page == "Background":
+    st.title("Automated vs. Interactive Segmentation")
+    st.markdown("""
+    The landscape of medical image segmentation can be divided into two paradigms:
 
-Key papers analysed:
-1. *iSegFormer* — Liu *et al.* 2022  
-2. *UNet + Spatial Attention* — Zhang *et al.* 2021  
-3. *SimpleClick* — Liu *et al.* 2023
-"""
-    )
+    1. **Fully Automated**  
+       - **Pros:** Batch processing, no human in loop, consistent throughput  
+       - **Cons:** May fail on special cases, cannot correct fuzzy boundaries  
+    2. **Interactive (Semi‑automatic)**  
+       - **Pros:** Human‑in‑the‑loop refinement, handles edge cases, personalized corrections  
+       - **Cons:** Requires minimal user input, slightly lower throughput  
+    """)
+    load_asset("seg_pipeline.png", caption="Figure 2: Workflow comparison")
 
-elif page == "Technique Comparison":
-    st.header("Automatic vs. Interactive Segmentation")
-    col1, col2 = st.columns(2)
-    with col1:
-        st.subheader("Fully Automatic (UNet + Attention)")
-        st.markdown("- Batch processing, stable\n- No human input, less flexible\n- Example: Zhang 2021")
-    with col2:
-        st.subheader("Interactive (Click‑based)")
-        st.markdown("- Few clicks refine mask\n- High accuracy with sparse labels\n- Examples: iSegFormer, SimpleClick")
+# 3. iSegFormer
+elif page == "iSegFormer":
+    st.title("iSegFormer (Liu et al., MICCAI 2022)")
+    st.markdown("""
+    **iSegFormer** tackles **3D knee MRI segmentation** with an **interactive** approach:
+    - **Backbone:** Swin Transformer  
+    - **Head:** Lightweight MLP for fast mask prediction  
+    - **Interactive Loop:** Doctor annotates/adjusts a few slices → model refines  
+    - **Benefits:**  
+      - Achieves **>90% Dice** with few annotations  
+      - Reduces annotation time by **60%**  
+    - **Limitations:** High GPU memory usage for 3D volumes
+    """)
+    load_asset("architecture.png", caption="Figure 3: iSegFormer architecture")
 
-elif page == "iSegFormer Model":
-    st.header("Inside iSegFormer")
-    st.markdown("- **Core**: Swin Transformer encoder + MLP decoder\n- **Highlights**: memory‑efficient, slice propagation, good with limited data")
-    st.image("https://raw.githubusercontent.com/uncbiag/iSegFormer/v1.0/figures/demo_gui.png", caption="iSegFormer interactive GUI", use_container_width=True)
+# 4. SimpleClick
+elif page == "SimpleClick":
+    st.title("SimpleClick (Liu et al., CVPR 2023)")
+    st.markdown("""
+    **SimpleClick** brings click‑style interaction to **2D images**:
+    - **Backbone:** Vision Transformer (ViT)  
+    - **Interaction:**  
+      1. **Positive click** on object → coarse mask  
+      2. **Negative click** on background → refine mask  
+      3. Iterate until satisfied  
+    - **Results:**  
+      - State‑of‑the‑art on natural & medical datasets  
+      - **>80 FPS** on a single GPU  
+      - User studies show **80% fewer** clicks needed
+    """)
+    load_asset("simpleclick_workflow.png", caption="Figure 4: SimpleClick interaction flow")
 
+# 5. Demo
 elif page == "Demo":
-    st.header("SimpleClick Online Demo")
-    st.markdown("Upload a medical image (PNG/JPG) and run SimpleClick inference right in the browser.")
-
-    uploaded = st.file_uploader("Choose image", type=["png","jpg","jpeg"])
-    gpu_flag = st.checkbox("Use GPU (if available)", value=False)
+    st.title("Static Demo: Center‑Click Segmentation")
+    st.info("*This demo runs a single center click; full interactive version coming soon.*")
+    uploaded = st.file_uploader("Upload an image", type=["jpg","jpeg","png"])
+    use_gpu = st.checkbox("Use GPU", value=False)
 
     if uploaded:
-        img = Image.open(uploaded).convert("RGB")
-        st.image(img, caption="Input image", use_container_width=True)
-
-        # save to temp
         tmp_dir = tempfile.mkdtemp()
-        img_path = os.path.join(tmp_dir, f"{uuid.uuid4()}.png")
-        img.save(img_path)
+        in_path = os.path.join(tmp_dir, f"{uuid.uuid4()}.png")
+        with open(in_path, "wb") as f:
+            f.write(uploaded.read())
+        st.image(in_path, caption="Input", use_column_width=True)
 
-        if st.button("Run SimpleClick demo"):
-            st.info("Running inference … please wait for the first time (weights may be downloaded).")
-            ckpt_path = "./weights/simpleclick_models/cocolvis_vit_huge.pth"
+        if st.button("Run Static Demo"):
+            st.write("Running inference…")
             cmd = [
                 "python3", "infer_simpleclick.py",
-                "--input", img_path,
+                "--input", in_path,
                 "--output", tmp_dir,
-                "--checkpoint", ckpt_path,
-                "--model-name", "vit_huge",
+                "--checkpoint", "./weights/simpleclick_models/cocolvis_vit_huge.pth",
+                "--gpu", "0" if use_gpu else "-1"
             ]
-            if gpu_flag:
-                cmd += ["--gpu", "0"]
+            try:
+                subprocess.run(cmd, check=True)
+            except subprocess.CalledProcessError as e:
+                st.error(f"Inference error:\n{e}")
             else:
-                cmd += ["--gpu", "-1"]
-
-            result = subprocess.run(cmd, capture_output=True, text=True)
-            if result.returncode != 0:
-                st.error("Inference failed:\n" + result.stderr)
-            else:
-                # find overlay image
-                overlay_file = None
-                for f in os.listdir(tmp_dir):
-                    if f.endswith("_overlay.png"):
-                        overlay_file = os.path.join(tmp_dir, f)
-                        break
-                if overlay_file and os.path.exists(overlay_file):
-                    st.image(overlay_file, caption="Segmentation Result", use_container_width=True)
+                base = os.path.splitext(os.path.basename(in_path))[0]
+                out = os.path.join(tmp_dir, f"{base}_overlay.png")
+                if os.path.exists(out):
+                    st.image(out, caption="Overlay", use_column_width=True)
                 else:
-                    st.warning("Inference finished but overlay not found. Check server logs.")
-    else:
-        st.info("Please upload an image.")
+                    st.error("Overlay not found. Check logs.")
 
-elif page == "References":
-    st.header("References")
-    st.markdown(
-        """```bibtex
-@inproceedings{Liu2022_iSegFormer,
-  author    = {Liu, Qin and others},
-  title     = {iSegFormer: Interactive Segmentation for 3D Knee MRI},
-  booktitle = {MICCAI},
-  year      = {2022}
-}
-
-@article{Zhang2021_UNetAttention,
-  author  = {Zhang, ...},
-  title   = {CNN-Based Fully Automated Segmentation with Spatial Attention},
-  journal = {IEEE Trans. Med. Imaging},
-  year    = {2021}
-}
-
-@inproceedings{Liu2023_SimpleClick,
-  author    = {Liu, Qin and others},
-  title     = {SimpleClick: Interactive Image Segmentation with Simple Vision Transformers},
-  booktitle = {ICCV},
-  year      = {2023}
-}
-```"""
-    )
-
-# Footer
-st.markdown("---\n*Demo built with SimpleClick & iSegFormer. Author: **Yusen Liu***")
-
+# 6. Installation
+elif page == "Installation":
+    st.title("Installation & Usage")
+    st.markdown("""
+    1. **Clone repository**  
+       ```bash
+       git clone https://github.com/yourname/my-streamlit-demo.git
+       cd my-streamlit-demo
+       ```
+    2. **Create environment & install**  
+       ```bash
+       pip install -r requirements.txt
+       ```
+    3. **Place assets**  
+       - `assets/mri_example.jpg`  
+       - `assets/seg_pipeline.png`  
+       - `assets/architecture.png`  
+       - `assets/simpleclick_workflow.png`
+    4. **Run the app**  
+       ```bash
+       streamlit run web.py
+       ```
+    """)
