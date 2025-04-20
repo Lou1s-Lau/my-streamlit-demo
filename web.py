@@ -99,7 +99,7 @@ elif page == "Background":
 
     Below is a schematic comparison of the two workflows.
     """)
-    load_asset("seg_pipeline.png", caption="Figure 2: Automated vs. Interactive Workflow")
+    load_asset("seg_pipeline.jpg", caption="Figure 2: Automated vs. Interactive Workflow")
 
 # 3. iSegFormer
 elif page == "iSegFormer":
