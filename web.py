@@ -119,10 +119,15 @@ elif page == "iSegFormer":
 elif page == "Demo":
     st.title("Static Demo: Center‑Click Segmentation")
 
-    # —— 在这里插入第二个视频播放器 —— 
-    video_url = "https://drive.google.com/uc?export=download&id=1R9z2BeLgLnUzFeqxj0J1zVjiFqzppUm3"
-    st.video(video_url)
+    # —— 本地视频回归 —— 
+    video_path = os.path.join("SimpleClick-1.0", "assets", "demo_oaizib_stcn_with_cycle.mp4")
+    if os.path.exists(video_path):
+        st.video(video_path, format="video/mp4", start_time=0)
+    else:
+        st.warning(f"Demo video not found at {video_path}")
 
+    st.info("*This demo uses a single center click; full interactive version coming soon.*")
+    uploaded = st.file_uploader("Upload an image", type=["jpg","jpeg","png"])
 
     st.info("*This demo uses a single center click; full interactive version coming soon.*")
     uploaded = st.file_uploader("Upload an image", type=["jpg","jpeg","png"])
