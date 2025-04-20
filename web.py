@@ -113,7 +113,7 @@ elif page == "iSegFormer":
     - **Results:** Over 90% Dice score with minimal manual input.  
     - **Trade‑off:** High GPU memory usage due to processing 3D data.
     """)
-    load_asset("architecture.png", caption="Figure 3: iSegFormer Architecture")
+    load_asset("architecture.jpg", caption="Figure 3: iSegFormer Architecture")
 
 # 4. Demo
 elif page == "Demo":
