@@ -49,17 +49,40 @@ if page == "Overview":
 
 # 2. Background
 elif page == "Background":
-    st.title("Automated vs. Interactive Segmentation")
+    st.title("Background: Deep Learning & Medical Image Segmentation")
     st.markdown("""
-    - **Fully Automated**  
-      - Pros: Batch processing, zero human effort  
-      - Cons: May fail on unusual or low‑contrast cases  
+    **1. 什么是深度学习？**  
+    - 深度学习是一种通过“神经网络”模拟人脑信息处理的技术。  
+    - 它可以自动**从大量数据中学习特征**，例如图像中的边缘、纹理甚至复杂结构。  
+    - 在医学影像领域，深度学习能帮助我们**精确定位并分割**身体器官、病灶等。
 
-    - **Interactive**  
-      - Pros: Human‑in‑loop corrections, handles edge cases  
-      - Cons: Requires minimal user input  
+    **2. 经典模型：CNN vs. Transformer**  
+    - **卷积神经网络（CNN）**  
+      - 通过“卷积核”滑动扫描图像，善于捕捉局部图案（如肿块边缘）。  
+      - UNet、ResNet 等是常见架构，已广泛应用于自动化分割任务。  
+    - **视觉 Transformer (ViT)**  
+      - 最初用于自然语言处理，将图像**切成小块**后，用“自注意力”机制学习全局关联。  
+      - 擅长捕捉远距离像素之间的依赖，适用于复杂结构（如 3D MRI 的多层次信息）。
+
+    **3. 图像分割：自动 vs. 交互式**  
+    - **全自动分割**  
+      - 医生只需上传批量影像，模型一次性跑完。  
+      - 优点：效率高，不需人工干预。  
+      - 缺点：遇到**模糊边界**或**少见病灶**时，结果可能不准确。  
+    - **交互式分割**  
+      - 医生在关键点**点击**或**涂抹**（正/负样本）进行微调。  
+      - 优点：可在**特殊病例**、**边界不清晰**时快速校正，提高准确率。  
+      - 缺点：需要少量用户操作，但通常只需几次点击即可达成。
+
+    **4. 为什么在医学影像中尤为重要？**  
+    - 医学影像 (MRI、CT) 属于**高分辨率、三维体积**数据，手工标注耗时长。  
+    - 自动化虽能加速，但难以应对所有**异常情况**。  
+    - 交互式工具让医生用极少量操作结合专业知识，**在几秒钟内**获得高质量分割。
+
+    **5. 小结示意图**  
+    - 下图展示了全自动与交互式分割在常见流程中的对比：  
     """)
-    load_asset("seg_pipeline.png", caption="Figure 2: Workflow comparison")
+    load_asset("seg_pipeline.png", caption="Figure 2: Automated vs. Interactive Workflow")
 
 # 3. iSegFormer
 elif page == "iSegFormer":
