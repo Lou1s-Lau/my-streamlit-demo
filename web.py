@@ -114,7 +114,14 @@ elif page == "Background":
             st.warning(f"Image not found: {img1}")
     with col2:
         st.markdown("**Other Methods (All Clicks at Once)**")
-        img2 = os.path.join("SimpleClick-1.
+        img2 = os.path.join("SimpleClick-1.0", "assets", "596b2c09-4c7d-404d-8931-7eecbcbf8172.png")
+        if os.path.exists(img2):
+            st.image(img2, use_container_width=True)
+        else:
+            st.warning(f"Image not found: {img2}")
+
+# …（后续 iSegFormer、Demo、References 部分保持不变）…
+
 
 
 # 3. iSegFormer
