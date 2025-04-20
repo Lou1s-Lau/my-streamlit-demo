@@ -15,74 +15,65 @@ page = st.sidebar.radio("Navigate", [
     "Overview", "Background", "iSegFormer", "SimpleClick", "Demo", "Installation"
 ])
 
-# Helpers
-def load_asset(name, caption=None, width=700):
-    path = os.path.join("assets", name)
-    return st.image(path, caption=caption, use_column_width=True)
+# Helper：安全加载本地或远程图像
+def load_asset(name, caption=None):
+    local = os.path.join("assets", name)
+    if os.path.exists(local):
+        st.image(local, caption=caption, use_container_width=True)
+    else:
+        st.warning(f"Asset `{name}` not found in `/assets`. You can add it or replace with a URL.")
+        # 示例：如果你有线上图片链接，可以这样加载：
+        # st.image("https://your.cdn.com/path/to/" + name, caption=caption, use_container_width=True)
 
 # 1. Overview
 if page == "Overview":
     st.title("Accelerating Clinical Diagnosis with Interactive Segmentation")
     st.markdown("""
-    In modern radiology, doctors rely on **CT**, **MRI**, and other 3D/2D scans to spot abnormalities.
-    Advanced AI segmentation can automate this, but edge cases and fuzzy boundaries still pose challenges.
+    In modern radiology, doctors rely on **CT**, **MRI**, and other scans to spot abnormalities.
+    AI segmentation automates much of this, but edge cases and fuzzy boundaries still pose challenges.
 
-    **Interactive segmentation** bridges the gap by letting the doctor **click** or **mark** areas of interest,
-    combining **AI speed** with **human expertise** for **higher accuracy**, **lower workload**, and **faster decisions**.
+    **Interactive segmentation** lets doctors **click** or **mark** regions,
+    combining **AI speed** with **human expertise** for **higher accuracy** and **faster decisions**.
     """)
-    load_asset("mri_example.jpg", caption="Figure 1: Knee MRI scan")
+    load_asset("mri_example.jpg", caption="Figure 1: Knee MRI scan")
 
 # 2. Background
 elif page == "Background":
     st.title("Automated vs. Interactive Segmentation")
     st.markdown("""
-    The landscape of medical image segmentation can be divided into two paradigms:
-
-    1. **Fully Automated**  
-       - **Pros:** Batch processing, no human in loop, consistent throughput  
-       - **Cons:** May fail on special cases, cannot correct fuzzy boundaries  
-    2. **Interactive (Semi‑automatic)**  
-       - **Pros:** Human‑in‑the‑loop refinement, handles edge cases, personalized corrections  
-       - **Cons:** Requires minimal user input, slightly lower throughput  
+    - **Fully Automated**  
+      - Pros: Batch processing, zero human effort  
+      - Cons: May fail on unusual or low‑contrast cases  
+    - **Interactive**  
+      - Pros: Human‑in‑loop corrections, handles edge cases  
+      - Cons: Requires minimal user input
     """)
-    load_asset("seg_pipeline.png", caption="Figure 2: Workflow comparison")
+    load_asset("seg_pipeline.png", caption="Figure 2: Workflow comparison")
 
 # 3. iSegFormer
 elif page == "iSegFormer":
     st.title("iSegFormer (Liu et al., MICCAI 2022)")
     st.markdown("""
-    **iSegFormer** tackles **3D knee MRI segmentation** with an **interactive** approach:
-    - **Backbone:** Swin Transformer  
-    - **Head:** Lightweight MLP for fast mask prediction  
-    - **Interactive Loop:** Doctor annotates/adjusts a few slices → model refines  
-    - **Benefits:**  
-      - Achieves **>90% Dice** with few annotations  
-      - Reduces annotation time by **60%**  
-    - **Limitations:** High GPU memory usage for 3D volumes
+    - Task: Interactive 3D knee MRI segmentation  
+    - Backbone: Swin Transformer + lightweight MLP  
+    - Key Insight: Fine‑tune on small data → high accuracy & efficiency  
     """)
-    load_asset("architecture.png", caption="Figure 3: iSegFormer architecture")
+    load_asset("architecture.png", caption="Figure 3: iSegFormer architecture")
 
 # 4. SimpleClick
 elif page == "SimpleClick":
     st.title("SimpleClick (Liu et al., CVPR 2023)")
     st.markdown("""
-    **SimpleClick** brings click‑style interaction to **2D images**:
-    - **Backbone:** Vision Transformer (ViT)  
-    - **Interaction:**  
-      1. **Positive click** on object → coarse mask  
-      2. **Negative click** on background → refine mask  
-      3. Iterate until satisfied  
-    - **Results:**  
-      - State‑of‑the‑art on natural & medical datasets  
-      - **>80 FPS** on a single GPU  
-      - User studies show **80% fewer** clicks needed
+    - Task: Click‑based 2D image segmentation  
+    - Backbone: Vision Transformer (ViT)  
+    - Workflow: Positive/negative clicks → iterative refinement  
     """)
-    load_asset("simpleclick_workflow.png", caption="Figure 4: SimpleClick interaction flow")
+    load_asset("simpleclick_workflow.png", caption="Figure 4: SimpleClick workflow")
 
-# 5. Demo
+# 5. Demo (Static center‑click)
 elif page == "Demo":
     st.title("Static Demo: Center‑Click Segmentation")
-    st.info("*This demo runs a single center click; full interactive version coming soon.*")
+    st.info("*This demo uses a single center click.*")
     uploaded = st.file_uploader("Upload an image", type=["jpg","jpeg","png"])
     use_gpu = st.checkbox("Use GPU", value=False)
 
@@ -91,7 +82,7 @@ elif page == "Demo":
         in_path = os.path.join(tmp_dir, f"{uuid.uuid4()}.png")
         with open(in_path, "wb") as f:
             f.write(uploaded.read())
-        st.image(in_path, caption="Input", use_column_width=True)
+        st.image(in_path, caption="Input Image", use_container_width=True)
 
         if st.button("Run Static Demo"):
             st.write("Running inference…")
@@ -110,30 +101,16 @@ elif page == "Demo":
                 base = os.path.splitext(os.path.basename(in_path))[0]
                 out = os.path.join(tmp_dir, f"{base}_overlay.png")
                 if os.path.exists(out):
-                    st.image(out, caption="Overlay", use_column_width=True)
+                    st.image(out, caption="Overlay", use_container_width=True)
                 else:
-                    st.error("Overlay not found. Check logs.")
+                    st.error("Overlay not found. Please check server logs.")
 
 # 6. Installation
 elif page == "Installation":
     st.title("Installation & Usage")
     st.markdown("""
-    1. **Clone repository**  
-       ```bash
-       git clone https://github.com/yourname/my-streamlit-demo.git
-       cd my-streamlit-demo
-       ```
-    2. **Create environment & install**  
-       ```bash
-       pip install -r requirements.txt
-       ```
-    3. **Place assets**  
-       - `assets/mri_example.jpg`  
-       - `assets/seg_pipeline.png`  
-       - `assets/architecture.png`  
-       - `assets/simpleclick_workflow.png`
-    4. **Run the app**  
-       ```bash
-       streamlit run web.py
-       ```
+    1. Clone repo and `cd my-streamlit-demo`  
+    2. `pip install -r requirements.txt`  
+    3. Place your images in `assets/` or use URLs  
+    4. `streamlit run web.py`
     """)
