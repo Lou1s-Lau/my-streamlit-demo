@@ -3,78 +3,88 @@
 <head>
   <meta charset="UTF-8">
   <title>Background – Medical AI</title>
-  <link href="css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootswatch@4.5.2/flatly/bootstrap.min.css" rel="stylesheet">
+  <link href="css/custom.css" rel="stylesheet">
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
   <a class="navbar-brand" href="index.html">Medical AI</a>
-  <div class="collapse navbar-collapse">
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navContent">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div id="navContent" class="collapse navbar-collapse">
     <ul class="navbar-nav">
       <li class="nav-item"><a class="nav-link" href="index.html">Overview</a></li>
-      <li class="nav-item"><a class="nav-link" href="background.html">Background</a></li>
+      <li class="nav-item active"><a class="nav-link" href="background.html">Background</a></li>
       <li class="nav-item"><a class="nav-link" href="isegformer.html">iSegFormer</a></li>
       <li class="nav-item"><a class="nav-link" href="references.html">References</a></li>
     </ul>
   </div>
 </nav>
 
-<div class="container mt-4">
-  <h1>Background: Deep Learning & Medical Image Segmentation</h1>
+<main class="container my-5">
+  <h1>Background</h1>
 
-  <h5>1. What is Deep Learning?</h5>
+  <h4>1. What is Deep Learning?</h4>
   <ul>
-    <li>Deep learning uses layered “neural networks” to learn features (edges → textures → shapes).</li>
-    <li>Training adjusts internal weights to minimize prediction errors on labeled data.</li>
+    <li>Deep learning uses layered neural networks to learn features from data (edges → textures → shapes).</li>
+    <li>Training adjusts weights to minimize errors on labeled examples.</li>
   </ul>
 
-  <h5>2. Key Architectures</h5>
-  <ul>
-    <li><strong>CNN</strong> (Convolutional Neural Network):  
-      uses learnable kernels to detect local patterns; backbone of UNet for segmentation.</li>
-    <li><strong>ViT</strong> (Vision Transformer):  
-      splits images into patches, uses self‐attention for global context; ideal for 3D volumes.</li>
-  </ul>
-
-  <h5>3. What Is Image Segmentation?</h5>
-  <p>
-    Assigns a label to every pixel (e.g., “cartilage,” “bone,” “background”),  
-    yielding precise outlines—critical for clinical planning.
-  </p>
-
-  <h5>4. Fully Automatic vs. Interactive Segmentation</h5>
+  <h4>2. Key Architectures</h4>
   <div class="row">
+    <div class="col-md-6">
+      <div class="card mb-4">
+        <div class="card-header">CNN (Convolutional Neural Network)</div>
+        <div class="card-body">
+          <p>Uses kernels to detect local patterns; backbone of UNet for semantic segmentation.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card mb-4">
+        <div class="card-header">ViT (Vision Transformer)</div>
+        <div class="card-body">
+          <p>Splits images into patches, uses self-attention to capture global context; ideal for 3D volumes.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h4>3. Image Segmentation</h4>
+  <p>Assign a label to every pixel (e.g., “cartilage”, “bone”, “background”), yielding precise outlines.</p>
+
+  <h4>4. Fully Automated vs. Interactive</h4>
+  <div class="row text-center">
     <div class="col-md-6">
       <h5>Fully Automated</h5>
-      <ul>
-        <li>No user input; batch processing</li>
-        <li>Pros: High throughput, minimal effort</li>
-        <li>Cons: May missegment fuzzy or rare cases</li>
+      <ul class="list-unstyled">
+        <li>Batch processing, no user input</li>
+        <li>Pros: High throughput</li>
+        <li>Cons: May missegment rare or low‑contrast cases</li>
       </ul>
+      <img src="assets/c7b307a5-6aee-4a01-b89f-2e50ed42303c.png"
+           class="img-fluid rounded" alt="Fully Automated">
     </div>
     <div class="col-md-6">
       <h5>Interactive</h5>
-      <ul>
-        <li>User provides clicks/scribbles for guidance</li>
-        <li>Pros: Combines expertise with AI, corrects edge‑cases</li>
-        <li>Cons: Requires a few interactions</li>
+      <ul class="list-unstyled">
+        <li>User provides clicks or strokes</li>
+        <li>Pros: Combines expertise and AI, corrects edge‑cases</li>
+        <li>Cons: Requires a few clicks</li>
       </ul>
-    </div>
-  </div>
-
-  <h3 class="mt-4">Workflow Comparison</h3>
-  <div class="row">
-    <div class="col-md-6 text-center">
-      <h5>Fully Automatic</h5>
-      <img src="assets/c7b307a5-6aee-4a01-b89f-2e50ed42303c.png"
-           class="img-fluid" alt="Fully Automatic Pipeline">
-    </div>
-    <div class="col-md-6 text-center">
-      <h5>Interactive</h5>
       <img src="assets/596b2c09-4c7d-404d-8931-7eecbcbf8172.png"
-           class="img-fluid" alt="Interactive Pipeline">
+           class="img-fluid rounded" alt="Interactive">
     </div>
   </div>
-</div>
+</main>
 
+<footer class="text-center">
+  <small>© 2025 Medical AI Demo</small>
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
