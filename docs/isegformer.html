@@ -3,34 +3,46 @@
 <head>
   <meta charset="UTF-8">
   <title>iSegFormer – Medical AI</title>
-  <link href="css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootswatch@4.5.2/flatly/bootstrap.min.css" rel="stylesheet">
+  <link href="css/custom.css" rel="stylesheet">
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
   <a class="navbar-brand" href="index.html">Medical AI</a>
-  <div class="collapse navbar-collapse">
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navContent">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div id="navContent" class="collapse navbar-collapse">
     <ul class="navbar-nav">
       <li class="nav-item"><a class="nav-link" href="index.html">Overview</a></li>
       <li class="nav-item"><a class="nav-link" href="background.html">Background</a></li>
-      <li class="nav-item"><a class="nav-link" href="isegformer.html">iSegFormer</a></li>
+      <li class="nav-item active"><a class="nav-link" href="isegformer.html">iSegFormer</a></li>
       <li class="nav-item"><a class="nav-link" href="references.html">References</a></li>
     </ul>
   </div>
 </nav>
 
-<div class="container mt-4">
-  <h1>iSegFormer (Liu et al., MICCAI 2022)</h1>
+<main class="container my-5">
+  <h1>iSegFormer</h1>
+  <p><strong>Liu et al., MICCAI 2022</strong></p>
   <ul>
     <li><strong>Task:</strong> Interactive 3D knee MRI segmentation</li>
     <li><strong>Encoder:</strong> Swin Transformer for global context</li>
     <li><strong>Decoder:</strong> Lightweight MLP for fast mask output</li>
-    <li><strong>Workflow:</strong> Clinician labels a few slices → model refines entire volume</li>
+    <li><strong>Workflow:</strong> Label a few slices → model refines entire volume</li>
     <li><strong>Result:</strong> >90% Dice with minimal labels</li>
-    <li><strong>Trade‑off:</strong> High GPU memory for 3D</li>
+    <li><strong>Trade‑off:</strong> Higher GPU memory use</li>
   </ul>
-  <img src="assets/architecture.jpg" class="img-fluid" alt="iSegFormer Architecture">
-  <h5 class="mt-2">Figure 3: iSegFormer Architecture</h5>
-</div>
+  <img src="assets/architecture.jpg" class="img-fluid rounded" alt="iSegFormer Architecture">
+  <h6 class="mt-2">Figure 3: iSegFormer Architecture</h6>
+</main>
 
+<footer class="text-center">
+  <small>© 2025 Medical AI Demo</small>
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
