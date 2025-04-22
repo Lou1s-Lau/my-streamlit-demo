@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>iSegFormer – Medical AI</title>
+  <link href="css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <a class="navbar-brand" href="index.html">Medical AI</a>
+  <div class="collapse navbar-collapse">
+    <ul class="navbar-nav">
+      <li class="nav-item"><a class="nav-link" href="index.html">Overview</a></li>
+      <li class="nav-item"><a class="nav-link" href="background.html">Background</a></li>
+      <li class="nav-item"><a class="nav-link" href="isegformer.html">iSegFormer</a></li>
+      <li class="nav-item"><a class="nav-link" href="references.html">References</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="container mt-4">
+  <h1>iSegFormer (Liu et al., MICCAI 2022)</h1>
+  <ul>
+    <li><strong>Task:</strong> Interactive 3D knee MRI segmentation</li>
+    <li><strong>Encoder:</strong> Swin Transformer for global context</li>
+    <li><strong>Decoder:</strong> Lightweight MLP for fast mask output</li>
+    <li><strong>Workflow:</strong> Clinician labels a few slices → model refines entire volume</li>
+    <li><strong>Result:</strong> >90% Dice with minimal labels</li>
+    <li><strong>Trade‑off:</strong> High GPU memory for 3D</li>
+  </ul>
+  <img src="assets/architecture.jpg" class="img-fluid" alt="iSegFormer Architecture">
+  <h5 class="mt-2">Figure 3: iSegFormer Architecture</h5>
+</div>
+
+</body>
+</html>
