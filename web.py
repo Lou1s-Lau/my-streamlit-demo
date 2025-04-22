@@ -1,6 +1,10 @@
 import streamlit as st
 from PIL import Image
+import numpy as np
 import tempfile, subprocess, uuid, os
+
+# 新增：绘图画布组件
+from streamlit_drawable_canvas import st_canvas
 
 # 页面全局配置
 st.set_page_config(
@@ -9,10 +13,10 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# 侧边栏导航
+# 侧边栏导航，新增 Interactive Demo，Static Demo 改名 Demo
 st.sidebar.markdown("# 🏥 Medical AI")
 page = st.sidebar.radio("Navigate", [
-    "Overview", "Background", "iSegFormer", "Demo", "References"
+    "Overview", "Background", "iSegFormer", "Interactive Demo", "Demo", "References"
 ])
 
 def load_asset(name, caption=None):
@@ -47,82 +51,46 @@ if page == "Overview":
     3. **Sagittal (right):** Side slice highlighting cruciate ligaments and patellofemoral joint.  
     """)
 
-# …（前面部分保持不变，略）…
-
 # 2. Background
 elif page == "Background":
     st.title("Background: Deep Learning & Medical Image Segmentation")
     st.markdown("""
     **1. What is Deep Learning?**  
-    - Deep learning is a branch of machine learning where models called _neural networks_ 
-      learn patterns from data through multiple layers of mathematical operations.  
-    - Each **layer** transforms its input (e.g., an image) into progressively more 
-      abstract features (edges → textures → shapes).  
-    - During **training**, the network adjusts internal parameters (_weights_) to minimize 
-      errors on a labeled dataset.
+    - Deep learning uses layered neural networks to learn features from data (edges → textures → shapes).  
+    - Training adjusts weights to minimize errors on labeled examples.
 
     **2. Key Architectures**  
-    - **Convolutional Neural Networks (CNNs):**  
-      - Use small, learnable filters (kernels) that _convolve_ across the image to detect 
-        local patterns such as edges or corners.  
-      - **Receptive field**: the area of input each filter “sees.” Deeper layers see larger contexts.  
-      - Popular for image classification and **semantic segmentation** (pixel‐wise labeling).  
+    - **CNN** (Convolutional Neural Network): uses kernels to detect local patterns; backbone of UNet.  
+    - **ViT** (Vision Transformer): splits images into patches, uses self‐attention for global context; ideal for 3D volumes.
 
-    - **Vision Transformers (ViT):**  
-      - Divide an image into fixed‐size **patches** (like tokens in language).  
-      - Use **self‐attention**, where each patch weighs its relationship to every other patch, 
-        capturing _global context_.  
-      - Well‐suited for complex or high‐dimensional data, such as 3D medical volumes.
+    **3. Image Segmentation**  
+    - Assigns a label to every pixel (e.g., “cartilage,” “bone,” “background”), yielding precise outlines.
 
-    **3. What Is Image Segmentation?**  
-    - **Image segmentation** assigns a label to every pixel: e.g., “cartilage,” “bone,” or “background.”  
-    - Unlike classification (one label per image) or detection (bounding boxes), segmentation 
-      yields precise outlines of structures.  
-    - In medicine, accurate segmentation of organs, tumors, or vessels is crucial for treatment planning.
+    **4. Fully Automated vs. Interactive**  
+    - **Fully Automated:** batch processing, no user input; <em>Pros:</em> high throughput; <em>Cons:</em> may fail on edge cases.  
+    - **Interactive:** user provides clicks/scribbles; <em>Pros:</em> corrects mistakes with few interactions.
 
-    **4. Automated vs. Interactive Segmentation**  
-    - **Fully Automated:**  
-      - The model processes images in a batch with no user input.  
-      - **Pros:** Fast, scalable, minimal human effort.  
-      - **Cons:** May fail on unusual anatomy, low‐contrast regions, or artifacts.  
-
-    - **Interactive / Semi‑automatic:**  
-      - The user (e.g., radiologist) provides _hints_—clicks, scribbles, or bounding boxes—  
-        to guide the algorithm.  
-      - **Positive clicks** mark areas _inside_ a structure; **negative clicks** mark outside regions.  
-      - **Pros:** Combines human expertise with AI, corrects edge‐cases, requires only a few interactions.  
-      - **Cons:** Slightly slower per image, but often still under a minute.
-
-    **5. Why It Matters in Medical Imaging**  
-    - Medical scans (MRI, CT) are often 3D with hundreds of slices—manual annotation is tedious.  
-    - Fully automatic tools speed up routine tasks but can’t handle every patient’s unique anatomy.  
-    - Interactive methods empower clinicians to **quickly refine** results in challenging cases, 
-      improving diagnostic accuracy and saving time.
+    **5. Why It Matters**  
+    - Medical scans are large 3D volumes; manual annotation is tedious.  
+    - Interactive methods let clinicians quickly refine results in challenging cases.
     """)
-    # —— Side-by-side comparison: two columns for images —— 
+
     st.markdown("### Fully Automatic vs. Interactive Segmentation Workflow")
     col1, col2 = st.columns(2)
-
     with col1:
         st.markdown("**Fully Automatic Segmentation**")
-        img_auto = os.path.join("SimpleClick-1.0", "assets",
-                                "automatic.png")
+        img_auto = os.path.join("SimpleClick-1.0", "assets", "automatic.png")
         if os.path.exists(img_auto):
             st.image(img_auto, use_container_width=True)
         else:
             st.warning(f"Image not found: {img_auto}")
-
     with col2:
         st.markdown("**Interactive Segmentation**")
-        img_inter = os.path.join("SimpleClick-1.0", "assets",
-                                 "interactive.png")
+        img_inter = os.path.join("SimpleClick-1.0", "assets", "interactive.png")
         if os.path.exists(img_inter):
             st.image(img_inter, use_container_width=True)
         else:
             st.warning(f"Image not found: {img_inter}")
-
-
-
 
 # 3. iSegFormer
 elif page == "iSegFormer":
@@ -130,26 +98,97 @@ elif page == "iSegFormer":
     st.markdown("""
     iSegFormer introduces **interactive segmentation** for **3D knee MRI**:
     - **Encoder:** Swin Transformer captures both local and global context.  
-    - **Decoder:** Lightweight MLP (Multilayer Perceptron) outputs segmentation masks slice by slice.  
-    - **Workflow:** Clinician labels a few key slices → model propagates and refines segmentation  
-      across the entire volume.  
-    - **Results:** Over 90% Dice score with minimal manual input.  
-    - **Trade‑off:** High GPU memory usage due to processing 3D data.
+    - **Decoder:** Lightweight MLP outputs masks slice by slice.  
+    - **Workflow:** Label a few slices → model refines across the volume.  
+    - **Result:** >90% Dice with minimal input; <em>trade‐off:</em> higher GPU memory.
     """)
     load_asset("architecture.jpg", caption="Figure 3: iSegFormer Architecture")
 
-# 4. Demo
+# 4. Interactive Demo
+elif page == "Interactive Demo":
+    st.title("Interactive Segmentation Demo")
+
+    # 上传图像
+    uploaded = st.file_uploader("Upload a medical image", type=["png","jpg","jpeg"])
+    if not uploaded:
+        st.info("Please upload an image to begin.")
+        st.stop()
+
+    # 转为 NumPy
+    img = Image.open(uploaded).convert("RGB")
+    img_np = np.array(img)
+
+    # 延迟加载模型预测器（假设 infer_simpleclick.build_predictor 存在）
+    @st.cache_resource
+    def load_predictor(path):
+        from infer_simpleclick import build_predictor
+        return build_predictor(path)
+
+    predictor = load_predictor("./weights/simpleclick_models/cocolvis_vit_huge.pth")
+
+    # 选择点击类型
+    click_type = st.radio("Click type", ["Positive (foreground)", "Negative (background)"])
+
+    # 初始化点击列表
+    if "clicks" not in st.session_state:
+        st.session_state.clicks = []  # list of (x,y,is_positive)
+
+    # 可绘制画布，仅支持点击(point)
+    canvas_result = st_canvas(
+        fill_color="rgba(0,0,0,0)",
+        stroke_color="#0f0" if click_type.startswith("Positive") else "#f00",
+        stroke_width=20,
+        background_image=img,
+        drawing_mode="point",
+        key="canvas",
+        update_streamlit=True,
+        height=img_np.shape[0],
+        width=img_np.shape[1],
+    )
+
+    # 记录最新点击
+    if canvas_result.json_data and canvas_result.json_data.get("objects"):
+        for obj in canvas_result.json_data["objects"][-1:]:
+            x, y = obj["path"][-1]
+            st.session_state.clicks.append(
+                (int(x), int(y), click_type.startswith("Positive"))
+            )
+
+    # 展示点击历史 & 运行分割
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("#### Click history")
+        for i, (x, y, is_pos) in enumerate(st.session_state.clicks, 1):
+            emoji = "🟢" if is_pos else "🔴"
+            st.write(f"{i}. {emoji} ({x}, {y})")
+        if st.button("🔄 Reset Clicks"):
+            st.session_state.clicks = []
+
+    with col2:
+        st.markdown("#### Segmentation result")
+        if st.button("Run / Update Segmentation"):
+            # predictor.get_prediction(image_np, clicks) → 返回二值 mask
+            mask = predictor.get_prediction(img_np, st.session_state.clicks)
+            # 叠加：红色高亮
+            overlay = img_np.copy()
+            overlay[mask > 0] = [255, 0, 0]
+            st.image(
+                [img_np, overlay],
+                caption=["Input Image", "Overlay Result"],
+                use_container_width=True
+            )
+
+# 5. Demo（保持静态中心点Demo）
 elif page == "Demo":
     st.title("Static Demo: Center‑Click Segmentation")
 
-    # 本地视频回归
     video_path = os.path.join("SimpleClick-1.0", "assets", "demo_oaizib_stcn_with_cycle.mp4")
     if os.path.exists(video_path):
         st.video(video_path, format="video/mp4", start_time=0)
     else:
         st.warning(f"Demo video not found at {video_path}")
 
-    st.info("*The full interactive version coming soon.*")
+    st.info("*The full interactive version is in the 'Interactive Demo' tab.*")
     use_gpu = st.checkbox("Use GPU", value=False)
     uploaded = st.file_uploader("Upload an image", type=["jpg","jpeg","png"])
     if uploaded:
@@ -180,13 +219,13 @@ elif page == "Demo":
                 else:
                     st.error("Overlay not found. Please check server logs.")
 
-# 5. References
+# 6. References
 elif page == "References":
     st.title("References")
     st.markdown("""
     1. Liu, Q., Xu, Z., Jiao, Y., & Niethammer, M. (2022). *iSegFormer: Interactive segmentation via transformers with application to 3D knee MRI images*. MICCAI 2022.  
     2. Zhang, X., Li, Z., Shi, H., Deng, Y., Zhou, G., & Tang, S. (2021). *A deep learning‑based method for knee articular cartilage segmentation in MRI images*. ICCAIS 2021.  
-    3. Liu, Q., Xu, Z., Bertasius, G., & Niethammer, M. (2023). *SimpleClick: Interactive Image Segmentation with Simple Vision Transformers*. ICCV 2023.  
+    3. Liu, Q., Xu, Z., Bertasius, G., & Niethammer, M. (2023). *SimpleClick: Interactive Image Segmentation with Simple Vision Transformers*. ICCVW 2023.  
     4. Marinov, Z., Jäger, P. F., Egger, J., Kleesiek, J., & Stiefelhagen, R. (2024). *Deep interactive segmentation of medical images: A systematic review and taxonomy*. IEEE TPAMI, 46(12), 10998–11039.  
     5. Huang, M., Zou, J., Zhang, Y., Bhatti, U. A., & Chen, J. (2024). *Efficient click‑based interactive segmentation for medical image with improved Plain‑ViT*. IEEE JBHI.  
     6. Luo, X., Wang, G., Song, T., Zhang, J., Aertsen, M., Deprest, J., Ourselin, S., Vercauteren, T., & Zhang, S. (2021). *MIDeepSeg: Minimally Interactive Segmentation of Unseen Objects from Medical Images Using Deep Learning*. arXiv:2104.12166.
