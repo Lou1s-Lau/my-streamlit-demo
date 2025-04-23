@@ -30,24 +30,25 @@ def load_asset(name, caption=None):
 if page == "Overview":
     st.title("Accelerating Clinical Diagnosis with Interactive Segmentation")
     st.markdown("""
-    In modern radiology, doctors rely on **CT**, **MRI** and other scans to detect 
-    subtle abnormalities in patient anatomy. Fully automated AI segmentation tools 
-    can process large volumes of images quickly, but often **struggle with fuzzy 
-    boundaries**—for example, tumor margins obscured by noise or low contrast—and 
-    **rare pathologies**, such as atypical glioblastoma shapes or uncommon vascular 
-    malformations where training data are sparse (Zhang et al., 2021).
+    Medical imaging techniques like **Computed Tomography (CT)** and **Magnetic Resonance Imaging (MRI)** are cornerstones of modern medicine, providing invaluable visual information for diagnosis, treatment planning, and monitoring disease progression. A critical step in analyzing these images is **segmentation**—precisely outlining anatomical structures or pathological findings (like tumors or lesions). Accurate segmentation allows doctors to measure volumes, assess morphology, and track changes over time, directly impacting clinical decisions.
 
-    **Interactive segmentation** addresses these limitations by allowing clinicians 
-    to provide targeted feedback. When a physician clicks inside the lesion 
-    (“positive click”) or just outside it (“negative click”), the algorithm’s 
-    local probability map is updated and the contour is refined in real time—this 
-    combines **human expertise** with **AI speed**, reducing correction time 
-    significantly (Liu et al., 2022).  
+    **Artificial Intelligence (AI)**, particularly deep learning, has driven significant progress in **fully automated segmentation**. These tools promise to analyze large volumes of scan data rapidly and consistently. However, purely automated approaches often encounter difficulties in real-world clinical scenarios:
+    * They can **struggle with ambiguous or fuzzy boundaries**, where the contrast between tissues is low, or where noise and artifacts obscure details (e.g., infiltrative tumor margins).
+    * They may perform poorly on **rare pathologies** or anatomical variations not well-represented in their training datasets, as their knowledge is limited to the patterns they have previously seen (Zhang et al., 2021). Relying solely on potentially inaccurate automated results in such cases can risk misdiagnosis or flawed treatment planning.
 
-    Below, Figure 1 shows a tri-planar knee MRI where cartilage boundaries can be 
-    especially fuzzy.
-    """, unsafe_allow_html=True)
-    load_asset("mri_example.jpg", caption="Figure 1: Tri-planar MRI of the Knee")
+    **Interactive segmentation** emerges as a powerful solution, creating a synergy between **human expertise** and **AI efficiency**. Instead of relying on a fully automated output or resorting to time-consuming manual outlining slice-by-slice, this approach allows clinicians to guide the AI algorithm with minimal, targeted feedback.
+    * Typically, a physician provides simple inputs, such as a **positive click** inside the region of interest (e.g., a lesion) and perhaps a **negative click** just outside it.
+    * The AI algorithm uses these cues to instantly update its understanding and **refine the segmentation contour in real-time**. This human-in-the-loop process leverages the clinician's anatomical knowledge and ability to interpret subtle or unusual findings, while the AI handles the laborious task of delineating the precise boundary.
+
+    This collaborative approach significantly reduces the time needed for accurate segmentation, especially in complex cases, compared to manual methods, while ensuring higher reliability than fully automated techniques in challenging situations (Liu et al., 2022). It empowers doctors to achieve high-quality segmentations faster, leading to more timely and confident diagnoses.
+
+    Below, Figure 1 illustrates a tri-planar knee MRI. This type of imaging often presents challenges for segmentation due to the complex arrangement of tissues like cartilage and bone, where boundaries can sometimes be indistinct. Interactive tools can be particularly helpful in accurately delineating these structures.
+    """, unsafe_allow_html=True) # Keep unsafe_allow_html=True if you have specific HTML needs, otherwise it might be optional.
+
+    # Assuming load_asset function loads and displays the image
+    # load_asset("mri_example.jpg", caption="Figure 1: Tri-planar MRI of the Knee")
+    st.image("mri_example.jpg", caption="Figure 1: Tri-planar MRI of the Knee - illustrating complex anatomical structures where segmentation is crucial.") # Example using st.image directly
+
 
 
 # 2. Background
