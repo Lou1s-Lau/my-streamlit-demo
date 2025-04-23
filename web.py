@@ -54,39 +54,59 @@ if page == "Overview":
 elif page == "Background":
     st.title("Background: Deep Learning & Medical Image Segmentation")
     st.markdown("""
-    Deep learning has revolutionized image analysis by using multi-layer neural networks 
-    to automatically extract hierarchical features—from edges and textures in early layers 
-    to complex shapes in deeper layers. In medical imaging, **Convolutional Neural Networks** 
-    (CNNs) like U-Net excel at capturing local patterns via learnable kernels, making them 
-    ideal for routine segmentation tasks (Zhang et al., 2021). However, CNNs’ limited receptive 
-    field can miss global context, which is crucial when lesions span large areas.
+    Deep learning revolutionized image analysis by introducing multi-layer neural networks 
+    that automatically learn hierarchical features—from simple edges in early layers to 
+    complex anatomical structures in deeper layers. In medical imaging, **Convolutional Neural 
+    Networks** (CNNs) such as U-Net remain the workhorse for **fully automated** segmentation, 
+    detecting local patterns with learnable kernels (Zhang et al., 2021). However, CNNs often 
+    falter when lesions span large areas or when image quality is degraded by noise or motion.
 
-    **Vision Transformers** (ViTs) overcome this by splitting an image into patches and 
-    applying a self-attention mechanism that models long-range dependencies between 
-    any two regions. This global view makes ViTs particularly powerful for 3D scans 
-    where anatomical structures interrelate across slices (Liu et al., 2023).
+    To overcome this, **Vision Transformers** (ViTs) split an image into patches and apply 
+    a **self-attention** mechanism to model long-range dependencies. This global context 
+    awareness is crucial in 3D scans—like MRI volumes—where adjacent slices share anatomical 
+    information (Liu et al., 2023).
 
-    In practice, **fully automated** systems run in batch without human input—offering 
-    high throughput but often faltering on low-contrast or rare cases. By contrast, 
-    **interactive segmentation** lets a clinician guide the model with a few clicks, 
-    correcting edge cases and dramatically improving accuracy in under-served regions 
-    (Liu et al., 2022).  
+    **Image segmentation** assigns every pixel a label (e.g., “bone,” “cartilage,” “background”), 
+    yielding precise contours used for surgical planning or treatment monitoring. Yet, even 
+    state-of-the-art automated systems can struggle with:
+    - **Fuzzy boundaries**, such as low-contrast tumor margins obscured by edema or blood;  
+    - **Rare pathologies**, like atypical lesion shapes in glioblastoma or uncommon vascular 
+      malformations, where few training examples exist (Marinov et al., 2024).
 
-    Together, these approaches illustrate a spectrum: from high-speed automation to 
-    clinician-in-the-loop refinement, each with its own strengths and trade-offs.
-    """)
+    **Interactive segmentation** bridges these gaps by letting clinicians guide the algorithm 
+    through a few targeted interactions. A **positive click** inside the region of interest 
+    and a **negative click** just outside it update the model’s local probability map, refining 
+    the mask in real time. This human-in-the-loop approach corrects edge cases—e.g., a tiny 
+    metastatic nodule adjacent to bone—while keeping interaction time under a minute per image 
+    (Huang et al., 2024; Luo et al., 2021).
+
+    Taken together, fully automated and interactive methods form a spectrum: one end offers 
+    high-throughput batch processing, the other provides clinician-driven precision on 
+    challenging cases.
+    """, unsafe_allow_html=True)
+
 
 # 3. iSegFormer
 elif page == "iSegFormer":
-    st.title("iSegFormer (Liu et al., MICCAI 2022)")
+    st.title("iSegFormer (Liu et al., MICCAI 2022)")
     st.markdown("""
-    iSegFormer introduces **interactive segmentation** for **3D knee MRI**:
-    - **Encoder:** Swin Transformer captures both local and global context.  
-    - **Decoder:** Lightweight MLP outputs masks slice by slice.  
-    - **Workflow:** Label a few slices → model refines across the volume.  
-    - **Result:** >90% Dice with minimal input; <em>trade‐off:</em> higher GPU memory.
-    """)
-    load_asset("architecture.jpg", caption="Figure 3: iSegFormer Architecture")
+    iSegFormer is an **interactive segmentation** framework tailored for **3D knee MRI**, where 
+    cartilage surfaces present complex curvatures and often blend into adjacent tissues. In their 
+    MICCAI 2022 paper, Liu et al. show that combining a hierarchical **Swin Transformer** encoder 
+    with a lightweight **MLP decoder** allows the model to quickly adapt to sparse user annotations 
+    (Liu et al., 2022).  
+
+    Rather than processing each slice in isolation, iSegFormer propagates corrections across the 
+    entire volume: the user labels a few key slices, and the transformer’s global attention 
+    ensures consistency as the model refines segmentation in neighboring slices. This yields Dice 
+    scores above 90% with minimal manual effort, demonstrating that interactive refinement can 
+    match or exceed fully automated accuracy under limited annotation budgets.  
+
+    The main trade-off is computational: handling 3D volumes with self-attention requires 
+    substantial GPU memory and incurs longer model initialization times, which may challenge 
+    deployment in resource-constrained clinical settings.
+    """, unsafe_allow_html=True)
+    load_asset("architecture.jpg", caption="Figure 3: iSegFormer Architecture")
 
 # 4. Interactive Demo
 elif page == "Interactive Demo":
