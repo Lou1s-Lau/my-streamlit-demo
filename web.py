@@ -83,7 +83,7 @@ elif page == "Background":
     Taken together, fully automated and interactive methods form a spectrum: one end offers 
     high-throughput batch processing, the other provides clinician-driven precision on 
     challenging cases.
-    """, unsafe_allow_html=True)
+    """)
 
 
 # 3. iSegFormer
