@@ -48,6 +48,17 @@ if page == "Overview":
     # Assuming load_asset function loads and displays the image
     # load_asset("mri_example.jpg", caption="Figure 1: Tri-planar MRI of the Knee")
     load_asset("mri_example.jpg", caption="Figure 1: Tri-planar MRI of the Knee")
+    st.markdown("""
+**Figure 1: Tri‑planar MRI of the Knee**
+
+This composite image shows three standard MRI views of the knee:
+
+1. **Axial Plane (left):** A horizontal slice through the femoral condyles and tibial plateau, highlighting cartilage surfaces, menisci, and potential meniscal tears.  
+2. **Coronal Plane (center):** A vertical, front‑to‑back view of the knee joint, ideal for assessing cartilage thickness, joint space narrowing, and medial/lateral compartment integrity.  
+3. **Sagittal Plane (right):** A side‑view slice that visualizes the anterior and posterior cruciate ligaments (ACL/PCL), femoral trochlea, and patellofemoral joint, critical for diagnosing ligament injuries and patellar tracking issues.
+
+These multi‑planar MRI images serve as the input for interactive segmentation models like iSegFormer and SimpleClick, enabling precise delineation of cartilage, menisci, and ligaments to support faster and more accurate clinical diagnosis.
+""")
 
 
 
