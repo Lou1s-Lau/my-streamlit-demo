@@ -127,27 +127,59 @@ elif page == "Background":
 
 
 
+Okay, let's expand the section on iSegFormer, adding more detail about its architecture, mechanism, and implications based on the information provided in your initial article and the existing summary.
+
+Here is the expanded version integrated into the Streamlit code structure:
+
+Python
+
+import streamlit as st
+
+# Assume helper function exists:
+# def load_asset(image_path, caption=""):
+#     st.image(image_path, caption=caption)
+
+# Assume page selection logic:
+page = "iSegFormer" # Set for demonstration
+
 # 3. iSegFormer
 elif page == "iSegFormer":
-    st.title("iSegFormer (Liu et al., MICCAI 2022)")
+    st.title("iSegFormer: Interactive 3D Segmentation (Liu et al., MICCAI 2022)")
     st.markdown("""
-    iSegFormer is an **interactive segmentation** framework tailored for **3D knee MRI**, where 
-    cartilage surfaces present complex curvatures and often blend into adjacent tissues. In their 
-    MICCAI 2022 paper, Liu et al. show that combining a hierarchical **Swin Transformer** encoder 
-    with a lightweight **MLP decoder** allows the model to quickly adapt to sparse user annotations 
-    (Liu et al., 2022).  
+    The **iSegFormer** framework, presented by Liu et al. at the top-tier **MICCAI 2022** conference, represents a significant advancement in **interactive segmentation**, specifically designed for the complexities of **3D knee MRI scans**. Segmenting structures like cartilage in 3D MRI is challenging due to intricate surface curvatures, thin structures, and often indistinct boundaries where cartilage blends into adjacent tissues like bone or meniscus. Traditional 2D slice-by-slice methods often fail to capture the full 3D context, while fully automated 3D methods can struggle with accuracy, especially when training data is limited.
 
-    Rather than processing each slice in isolation, iSegFormer propagates corrections across the 
-    entire volume: the user labels a few key slices, and the transformer’s global attention 
-    ensures consistency as the model refines segmentation in neighboring slices. This yields Dice 
-    scores above 90% with minimal manual effort, demonstrating that interactive refinement can 
-    match or exceed fully automated accuracy under limited annotation budgets.  
+    **Architectural Highlights:**
 
-    The main trade-off is computational: handling 3D volumes with self-attention requires 
-    substantial GPU memory and incurs longer model initialization times, which may challenge 
-    deployment in resource-constrained clinical settings.
+    iSegFormer tackles these challenges by intelligently combining cutting-edge deep learning components:
+    * **Hierarchical Swin Transformer Encoder:** Instead of a standard CNN, iSegFormer leverages the **Swin Transformer**. This architecture is particularly well-suited for medical images because it processes image data hierarchically (capturing features at different scales, similar to CNNs) but uses a shifted-window self-attention mechanism. This allows it to model **long-range dependencies** across the entire 3D volume more efficiently than standard Vision Transformers, capturing the global context crucial for understanding anatomical continuity across slices.
+    * **Lightweight MLP Decoder:** Complementing the powerful encoder is a simple, **lightweight Multi-Layer Perceptron (MLP) decoder**. The choice of a lightweight decoder is crucial for interactivity; it allows the model to **rapidly generate or update the segmentation mask** in response to user input without introducing significant computational delay during the interactive refinement process.
+
+    **Interactive Mechanism and Efficiency:**
+
+    The core idea behind iSegFormer's interactivity is **efficiency through sparse guidance**. Rather than requiring dense annotations or corrections on every slice, the clinician provides minimal input:
+    * The user typically provides **positive and negative clicks** on only a **few key slices** within the 3D volume where the initial automated segmentation might be inaccurate.
+    * The Swin Transformer's **global attention mechanism** then takes over. It effectively **propagates the contextual information** from these sparse user corrections throughout the interconnected 3D volume. A correction made on one slice informs the segmentation refinement on adjacent and even more distant slices, ensuring anatomical consistency.
+
+    **Performance and Value Proposition:**
+
+    As demonstrated by Liu et al. (2022), this approach yields impressive results:
+    * It achieves high segmentation accuracy, with reported **Dice Similarity Coefficients (DSC) often exceeding 90%** for knee cartilage.
+    * Crucially, this accuracy is obtained with **minimal manual effort**, significantly reducing the clinician's interaction time compared to fully manual segmentation or slice-by-slice refinement.
+    * It shows that interactive methods can effectively **compensate for limited annotated training data**. By fine-tuning with just a small amount of interactive guidance, iSegFormer can reach accuracy levels comparable to or even exceeding fully automated models trained on larger datasets.
+
+    **Computational Considerations:**
+
+    Despite its effectiveness, iSegFormer highlights a common trade-off with advanced 3D transformer models:
+    * Processing entire 3D volumes with self-attention mechanisms is **computationally intensive**. It demands **substantial GPU memory**, often necessitating high-end graphics cards typically found in research settings rather than standard clinical workstations.
+    * The **model initialization time** can also be longer compared to simpler models.
+    * These resource requirements could pose a **barrier to widespread adoption** in routine clinical workflows, particularly in environments with limited computational infrastructure.
+
+    In essence, iSegFormer showcases the power of Transformers for context-aware, interactive 3D segmentation, offering high accuracy with minimal user input, but its practical deployment requires careful consideration of the necessary hardware resources.
     """, unsafe_allow_html=True)
-    load_asset("architecture.jpg", caption="Figure 3: iSegFormer Architecture")
+
+    # Assuming load_asset function loads and displays the image
+    # load_asset("architecture.jpg", caption="Figure 3: iSegFormer Architecture")
+    st.image("architecture.jpg", caption="Figure 3: Conceptual overview of the iSegFormer Archit
 
 # 4. Interactive Demo
 elif page == "Interactive Demo":
@@ -270,7 +302,7 @@ elif page == "References":
     st.markdown("""
     1. Liu, Q., Xu, Z., Jiao, Y., & Niethammer, M. (2022). *iSegFormer: Interactive segmentation via transformers with application to 3D knee MRI images*. MICCAI 2022.  
     2. Zhang, X., Li, Z., Shi, H., Deng, Y., Zhou, G., & Tang, S. (2021). *A deep learning‑based method for knee articular cartilage segmentation in MRI images*. ICCAIS 2021.  
-    3. Liu, Q., Xu, Z., Bertasius, G., & Niethammer, M. (2023). *SimpleClick: Interactive Image Segmentation with Simple Vision Transformers*. ICCVW 2023.  
+    3. Liu, Q., Xu, Z., Bertasius, G., & Niethammer, M. (2023). *SimpleClick: Interactive Image Segmentation with Simple Vision Transformers*. ICCV 2023.  
     4. Marinov, Z., Jäger, P. F., Egger, J., Kleesiek, J., & Stiefelhagen, R. (2024). *Deep interactive segmentation of medical images: A systematic review and taxonomy*. IEEE TPAMI, 46(12), 10998–11039.  
     5. Huang, M., Zou, J., Zhang, Y., Bhatti, U. A., & Chen, J. (2024). *Efficient click‑based interactive segmentation for medical image with improved Plain‑ViT*. IEEE JBHI.  
     6. Luo, X., Wang, G., Song, T., Zhang, J., Aertsen, M., Deprest, J., Ourselin, S., Vercauteren, T., & Zhang, S. (2021). *MIDeepSeg: Minimally Interactive Segmentation of Unseen Objects from Medical Images Using Deep Learning*. arXiv:2104.12166.
