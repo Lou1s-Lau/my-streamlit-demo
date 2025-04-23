@@ -54,42 +54,27 @@ if page == "Overview":
 elif page == "Background":
     st.title("Background: Deep Learning & Medical Image Segmentation")
     st.markdown("""
-    **1. What is Deep Learning?**  
-    - Deep learning uses layered neural networks to learn features from data (edges → textures → shapes).  
-    - Training adjusts weights to minimize errors on labeled examples.
+    Deep learning has revolutionized image analysis by using multi-layer neural networks 
+    to automatically extract hierarchical features—from edges and textures in early layers 
+    to complex shapes in deeper layers. In medical imaging, **Convolutional Neural Networks** 
+    (CNNs) like U-Net excel at capturing local patterns via learnable kernels, making them 
+    ideal for routine segmentation tasks (Zhang et al., 2021). However, CNNs’ limited receptive 
+    field can miss global context, which is crucial when lesions span large areas.
 
-    **2. Key Architectures**  
-    - **CNN** (Convolutional Neural Network): uses kernels to detect local patterns; backbone of UNet.  
-    - **ViT** (Vision Transformer): splits images into patches, uses self‐attention for global context; ideal for 3D volumes.
+    **Vision Transformers** (ViTs) overcome this by splitting an image into patches and 
+    applying a self-attention mechanism that models long-range dependencies between 
+    any two regions. This global view makes ViTs particularly powerful for 3D scans 
+    where anatomical structures interrelate across slices (Liu et al., 2023).
 
-    **3. Image Segmentation**  
-    - Assigns a label to every pixel (e.g., “cartilage,” “bone,” “background”), yielding precise outlines.
+    In practice, **fully automated** systems run in batch without human input—offering 
+    high throughput but often faltering on low-contrast or rare cases. By contrast, 
+    **interactive segmentation** lets a clinician guide the model with a few clicks, 
+    correcting edge cases and dramatically improving accuracy in under-served regions 
+    (Liu et al., 2022).  
 
-    **4. Fully Automated vs. Interactive**  
-    - **Fully Automated:** batch processing, no user input; <em>Pros:</em> high throughput; <em>Cons:</em> may fail on edge cases.  
-    - **Interactive:** user provides clicks/scribbles; <em>Pros:</em> corrects mistakes with few interactions.
-
-    **5. Why It Matters**  
-    - Medical scans are large 3D volumes; manual annotation is tedious.  
-    - Interactive methods let clinicians quickly refine results in challenging cases.
+    Together, these approaches illustrate a spectrum: from high-speed automation to 
+    clinician-in-the-loop refinement, each with its own strengths and trade-offs.
     """)
-
-    st.markdown("### Fully Automatic vs. Interactive Segmentation Workflow")
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown("**Fully Automatic Segmentation**")
-        img_auto = os.path.join("SimpleClick-1.0", "assets", "automatic.png")
-        if os.path.exists(img_auto):
-            st.image(img_auto, use_container_width=True)
-        else:
-            st.warning(f"Image not found: {img_auto}")
-    with col2:
-        st.markdown("**Interactive Segmentation**")
-        img_inter = os.path.join("SimpleClick-1.0", "assets", "interactive.png")
-        if os.path.exists(img_inter):
-            st.image(img_inter, use_container_width=True)
-        else:
-            st.warning(f"Image not found: {img_inter}")
 
 # 3. iSegFormer
 elif page == "iSegFormer":
