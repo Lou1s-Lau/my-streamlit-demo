@@ -127,21 +127,6 @@ elif page == "Background":
 
 
 
-Okay, let's expand the section on iSegFormer, adding more detail about its architecture, mechanism, and implications based on the information provided in your initial article and the existing summary.
-
-Here is the expanded version integrated into the Streamlit code structure:
-
-Python
-
-import streamlit as st
-
-# Assume helper function exists:
-# def load_asset(image_path, caption=""):
-#     st.image(image_path, caption=caption)
-
-# Assume page selection logic:
-page = "iSegFormer" # Set for demonstration
-
 # 3. iSegFormer
 elif page == "iSegFormer":
     st.title("iSegFormer: Interactive 3D Segmentation (Liu et al., MICCAI 2022)")
