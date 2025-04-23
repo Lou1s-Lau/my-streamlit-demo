@@ -47,7 +47,7 @@ if page == "Overview":
 
     # Assuming load_asset function loads and displays the image
     # load_asset("mri_example.jpg", caption="Figure 1: Tri-planar MRI of the Knee")
-    st.image("mri_example.jpg", caption="Figure 1: Tri-planar MRI of the Knee - illustrating complex anatomical structures where segmentation is crucial.") # Example using st.image directly
+    load_asset("mri_example.jpg", caption="Figure 1: Tri-planar MRI of the Knee")
 
 
 
