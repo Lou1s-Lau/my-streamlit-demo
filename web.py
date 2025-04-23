@@ -164,7 +164,7 @@ elif page == "iSegFormer":
 
     # Assuming load_asset function loads and displays the image
     # load_asset("architecture.jpg", caption="Figure 3: iSegFormer Architecture")
-    st.image("architecture.jpg", caption="Figure 3: Conceptual overview of the iSegFormer Archit
+    load_asset("architecture.jpg", caption="Figure 3: iSegFormer Architecture")
 
 # 4. Interactive Demo
 elif page == "Interactive Demo":
