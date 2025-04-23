@@ -30,26 +30,25 @@ def load_asset(name, caption=None):
 if page == "Overview":
     st.title("Accelerating Clinical Diagnosis with Interactive Segmentation")
     st.markdown("""
-    In modern radiology, doctors rely on **CT**, **MRI**, and other scans
-    to spot subtle abnormalities. While fully automated AI tools can
-    segment organs or lesions at scale, they sometimes struggle with
-    fuzzy boundaries or rare pathologies.
+    In modern radiology, doctors rely on **CT**, **MRI** and other scans to detect 
+    subtle abnormalities in patient anatomy. Fully automated AI segmentation tools 
+    can process large volumes of images quickly, but often **struggle with fuzzy 
+    boundaries**—for example, tumor margins obscured by noise or low contrast—and 
+    **rare pathologies**, such as atypical glioblastoma shapes or uncommon vascular 
+    malformations where training data are sparse (Zhang et al., 2021).
 
-    **Interactive segmentation** bridges the gap by letting physicians
-    guide the algorithm—clicking or marking key regions—combining
-    **AI speed** with **clinical expertise** for **higher accuracy**
-    and **faster decision‐making**.
-    """)
-    load_asset("mri_example.jpg", caption="Figure 1: Knee MRI scan")
-    st.markdown("""
-    **Figure 1: Tri‑planar MRI of the Knee**
+    **Interactive segmentation** addresses these limitations by allowing clinicians 
+    to provide targeted feedback. When a physician clicks inside the lesion 
+    (“positive click”) or just outside it (“negative click”), the algorithm’s 
+    local probability map is updated and the contour is refined in real time—this 
+    combines **human expertise** with **AI speed**, reducing correction time 
+    significantly (Liu et al., 2022).  
 
-    This composite image shows three standard MRI views of the knee:
+    Below, Figure 1 shows a tri-planar knee MRI where cartilage boundaries can be 
+    especially fuzzy.
+    """, unsafe_allow_html=True)
+    load_asset("mri_example.jpg", caption="Figure 1: Tri-planar MRI of the Knee")
 
-    1. **Axial (left):** Horizontal slice through the femoral condyles and tibial plateau.  
-    2. **Coronal (center):** Front‑to‑back slice, ideal for cartilage thickness and joint space.  
-    3. **Sagittal (right):** Side slice highlighting cruciate ligaments and patellofemoral joint.  
-    """)
 
 # 2. Background
 elif page == "Background":
