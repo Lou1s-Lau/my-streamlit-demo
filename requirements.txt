@@ -1,8 +1,9 @@
+# requirements.txt
 streamlit
-gdown
+streamlit-drawable-canvas
 torch
 torchvision
-opencv-python
-pillow
 numpy
-streamlit_drawable_canvas
+Pillow
+gdown
+opencv-python-headless
