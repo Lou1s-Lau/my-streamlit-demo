@@ -4,7 +4,24 @@ import numpy as np
 
 from albumentations.core.serialization import SERIALIZABLE_REGISTRY
 from albumentations import ImageOnlyTransform, DualTransform
-from albumentations.core.transforms_interface import to_tuple
+# 兼容新版 albumentations：to_tuple 可能不再在 transforms_interface 里
+try:
+    from albumentations.core.transforms_interface import to_tuple
+except ImportError:
+    # 简单兜底：如果给定的是列表/元组且长度正确，返回 tuple；否则广播为 length 个元素
+    def to_tuple(param, length=None, bias=0):
+        # 如果不用指定长度，直接把可迭代的转成 tuple，其他当成一元 tuple
+        if length is None:
+            if isinstance(param, (list, tuple)):
+                return tuple(param)
+            return (param,)
+        # 有指定长度时
+        if isinstance(param, (list, tuple)) and len(param) == length:
+            return tuple(param)
+        if isinstance(param, (list, tuple)) and len(param) == 1:
+            return (param[0],) * length
+        return (param,) * length
+
 from albumentations.augmentations import functional as F
 from isegm.utils.misc import get_bbox_from_mask, expand_bbox, clamp_bbox, get_labels_with_sizes
 
