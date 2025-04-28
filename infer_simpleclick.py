@@ -3,9 +3,8 @@ import os, sys
 
 # 假设你的 SimpleClick 目录就叫 SimpleClick 并且与 infer_simpleclick.py 同级
 BASE_DIR = os.path.dirname(__file__)
-sys.path.insert(0, os.path.join(BASE_DIR, "SimpleClick"))
 # 如果你用的是 SimpleClick-1.0 文件夹，就改成：
-# sys.path.insert(0, os.path.join(BASE_DIR, "SimpleClick-1.0"))
+sys.path.insert(0, os.path.join(BASE_DIR, "SimpleClick-1.0"))
 
 # 然后再导入
 import argparse
