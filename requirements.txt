@@ -8,3 +8,4 @@ Pillow
 gdown
 opencv-python-headless
 tensorboard
+albumentations
