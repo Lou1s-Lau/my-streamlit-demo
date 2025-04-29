@@ -7,44 +7,42 @@ import gdown
 import torch
 import numpy as np
 from PIL import Image
-# download_checkpoint 的定义，以及:
-GDRIVE_ID = "1kMHYLPC8uKaCpiuF3kfrlFQK6LyOpXKZ"
-WEIGHTS_DIR = os.path.join(BASE_DIR, "weights", "simpleclick_models")
-WEIGHTS_PATH = os.path.join(WEIGHTS_DIR, "cocolvis_vit_huge.pth")
 
-# ─── 1. 把 SimpleClick-1.0 放到模块搜索路径最前面 ───
-BASE_DIR = os.path.dirname(__file__)
-SCC_DIR = os.path.join(BASE_DIR, "SimpleClick-1.0")
+# ─── 1. 把 SimpleClick-1.0 源码加入 sys.path ───
+BASE_DIR   = os.path.dirname(__file__)
+SCC_DIR    = os.path.join(BASE_DIR, "SimpleClick-1.0")
 if SCC_DIR not in sys.path:
     sys.path.insert(0, SCC_DIR)
 
-# ─── 2. 正确导入 v1.0 接口 ───
+# ─── 2. 从 v1.0 接口导入配置和模型加载工具 ───
 from isegm.utils.exp       import load_config_file
-from isegm.inference.utils import find_checkpoint, load_is_model
+from isegm.inference.utils import load_is_model
 
-# ─── 3. Google Drive 权重下载设定 ───
+# ─── 3. Google Drive 权重下载配置 ───
 GDRIVE_ID    = "1kMHYLPC8uKaCpiuF3kfrlFQK6LyOpXKZ"
 WEIGHTS_DIR  = os.path.join(BASE_DIR, "weights", "simpleclick_models")
 WEIGHTS_PATH = os.path.join(WEIGHTS_DIR, "cocolvis_vit_huge.pth")
 
 def download_checkpoint():
+    """如果本地没有，就从 Google Drive 下到 weights/simpleclick_models 文件夹里"""
     os.makedirs(WEIGHTS_DIR, exist_ok=True)
     if not os.path.exists(WEIGHTS_PATH):
+        print(f"Downloading weights to {WEIGHTS_PATH} …")
         url = f"https://drive.google.com/uc?export=download&id={GDRIVE_ID}"
         gdown.download(url, WEIGHTS_PATH, quiet=False)
     return WEIGHTS_PATH
 
-# ─── 4. 构建模型函数 ───
+# ─── 4. 构建 Predictor 的函数 ───
 @torch.no_grad()
 def build_predictor(checkpoint: str, device: torch.device):
-    # 1) 如果本地没有，就从 Google Drive 拉下来
+    # 4.1 下载或使用传入的 checkpoint
     ckpt = download_checkpoint() if checkpoint == WEIGHTS_PATH else checkpoint
 
-    # 2) 读取项目根目录下 SimpleClick-1.0/config.yml 的配置
+    # 4.2 读取 config.yml（SimpleClick-1.0 根目录下）
     cfg_path = os.path.join(SCC_DIR, "config.yml")
     cfg = load_config_file(cfg_path, return_edict=True)
 
-    # 3) 直接把本地 ckpt 路径传给 load_is_model，省掉 find_checkpoint
+    # 4.3 直接用 ckpt 路径加载模型，跳过 find_checkpoint
     model = load_is_model(
         ckpt,
         device,
@@ -53,29 +51,21 @@ def build_predictor(checkpoint: str, device: torch.device):
     )
     return model
 
-
-# ─── 5. 推理函数（静态中心点击示例） ───
+# ─── 5. 推理函数：根据 clicks 返回二值 mask ───
 @torch.no_grad()
 def get_prediction(model, image_np: np.ndarray, clicks: list):
     """
-    model: load_is_model 返回的模型
-    image_np: H×W×3 uint8 的 numpy 图像
-    clicks: List of (x:int, y:int, is_positive:bool)
+    model: load_is_model 返回的模型实例
+    image_np: H×W×3 ndarray
+    clicks: List[ (x:int, y:int, is_positive:bool) ]
     """
-    # 这里只做一个“中央点击”demo，如果你要完全交互可以改这里：
-    h, w = image_np.shape[:2]
-    # 强制用中央正点
-    pts = [(w//2, h//2, True)]
-
-    # 单图批次化
-    clicks_lists = [pts]
-    # 模型调用接口：直接把 ndarray 和点击列表扔进去
-    output = model(image_np, clicks_lists)  # ITRMaskModel 的 __call__
-    # output 是一个 dict，里面 key=“instances” 是 logits tensor
+    # 直接把用户传来的 clicks 用作交互
+    clicks_lists = [clicks]  # batch of one
+    output = model(image_np, clicks_lists)    # ITRMaskModel __call__
     mask = output["instances"].argmax(0).cpu().numpy().astype(np.uint8)
     return mask
 
-# ─── 6. 命令行调用保持兼容 ───
+# ─── 6. 保留 CLI 模式 ───
 def run_cli():
     parser = argparse.ArgumentParser(description="SimpleClick Inference")
     parser.add_argument("--input",      required=True,  help="输入图像路径")
@@ -85,18 +75,19 @@ def run_cli():
     args = parser.parse_args()
 
     device = torch.device(f"cuda:{args.gpu}" if args.gpu >= 0 else "cpu")
-    model = build_predictor(args.checkpoint, device)
+    model  = build_predictor(args.checkpoint, device)
 
-    # 读图
-    img = Image.open(args.input).convert("RGB")
+    img    = Image.open(args.input).convert("RGB")
     img_np = np.array(img)
 
-    # 推理
-    mask = get_prediction(model, img_np, [])
+    # 测试用：中心点正点击
+    h, w  = img_np.shape[:2]
+    clicks = [(w//2, h//2, True)]
+    mask   = get_prediction(model, img_np, clicks)
 
     # 叠加红色 overlay
     overlay = img_np.copy()
-    overlay[mask > 0] = [255, 0, 0]
+    overlay[mask > 0] = [255,0,0]
     out_img = Image.fromarray(overlay)
 
     os.makedirs(args.output, exist_ok=True)
