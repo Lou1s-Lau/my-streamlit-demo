@@ -1,4 +1,9 @@
 # infer_simpleclick.py
+# 放在所有其它 import 之前
+import os, sys
+# 假设 web.py 和 SimpleClick-1.0 是同级目录
+sys.path.append(os.path.join(os.path.dirname(__file__), "SimpleClick-1.0"))
+
 import torch
 # ─── 在这里打补丁 ───
 # 备份原始的 torch.load
@@ -12,8 +17,6 @@ def _patched_torch_load(f, *args, **kwargs):
 torch.load = _patched_torch_load
 
 # 下面开始其他导入
-import os
-import sys
 import argparse
 import gdown
 import numpy as np
