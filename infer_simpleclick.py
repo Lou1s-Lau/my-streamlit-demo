@@ -1,14 +1,26 @@
 # infer_simpleclick.py
 import torch
-# 备份原始 torch.load
+# ─── 在这里打补丁 ───
+# 备份原始的 torch.load
 _orig_torch_load = torch.load
-# 新的 torch.load：如果调用里没传 weights_only，就强制加上 weights_only=False
 def _patched_torch_load(f, *args, **kwargs):
+    # 如果调用里没传 weights_only，就加上 False
     if "weights_only" not in kwargs:
         kwargs["weights_only"] = False
     return _orig_torch_load(f, *args, **kwargs)
-# 覆盖
+# 覆盖 torch.load
 torch.load = _patched_torch_load
+
+# 下面开始其他导入
+import os
+import sys
+import argparse
+import gdown
+import numpy as np
+from PIL import Image
+
+# …… 其余代码不变 ……
+
 
 import os
 import sys
