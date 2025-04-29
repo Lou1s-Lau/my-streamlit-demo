@@ -1,5 +1,7 @@
-import sys, os
-# sys.path.append(os.path.join(os.path.dirname(__file__), "SimpleClick-1.0"))
+import os, sys
+# 假设 web.py 和 SimpleClick-1.0 在同一级目录
+ROOT = os.path.dirname(__file__)
+sys.path.insert(0, os.path.join(ROOT, "SimpleClick-1.0"))
 
 import streamlit as st
 from PIL import Image
