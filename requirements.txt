@@ -9,3 +9,4 @@ gdown
 opencv-python-headless
 tensorboard
 albumentations
+easydict
