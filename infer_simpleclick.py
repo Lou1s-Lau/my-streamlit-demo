@@ -1,10 +1,12 @@
 # infer_simpleclick.py
+
 import os, sys
 
-# 假设你的 SimpleClick 目录就叫 SimpleClick 并且与 infer_simpleclick.py 同级
+# —— 1. 把 SimpleClick-1.0 加入到模块搜索路径 —— 
 BASE_DIR = os.path.dirname(__file__)
-# 如果你用的是 SimpleClick-1.0 文件夹，就改成：
-sys.path.insert(0, os.path.join(BASE_DIR, "SimpleClick-1.0"))
+SIMPLECLICK_PATH = os.path.join(BASE_DIR, "SimpleClick-1.0")
+if SIMPLECLICK_PATH not in sys.path:
+    sys.path.insert(0, SIMPLECLICK_PATH)
 
 # 然后再导入
 import argparse
