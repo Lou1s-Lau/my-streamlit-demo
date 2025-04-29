@@ -19,16 +19,6 @@ import gdown
 import numpy as np
 from PIL import Image
 
-# …… 其余代码不变 ……
-
-
-import os
-import sys
-import argparse
-import gdown
-import numpy as np
-from PIL import Image
-
 # ─── 1. 把 SimpleClick-1.0 源码加入 sys.path ───
 BASE_DIR   = os.path.dirname(__file__)
 SCC_DIR    = os.path.join(BASE_DIR, "SimpleClick-1.0")
