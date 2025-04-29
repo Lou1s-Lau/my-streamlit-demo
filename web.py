@@ -1,19 +1,31 @@
-import os, sys
-# 假设 web.py 和 SimpleClick-1.0 在同一级目录
-ROOT = os.path.dirname(__file__)
-sys.path.insert(0, os.path.join(ROOT, "SimpleClick-1.0"))
+import os
+import uuid
+import tempfile
 
 import streamlit as st
 from PIL import Image
 import numpy as np
-import tempfile, subprocess, uuid, os
 from streamlit_drawable_canvas import st_canvas
-import tempfile, uuid, os
-# 不要在顶部 import cv2/torch/gdown，留到后面 Demo 里再导入
+import streamlit.components.v1 as components  # 如需 iframe 嵌入可保留
+# —— 全局常量 & 路径 —— 
+ROOT = os.path.dirname(__file__)
+SIMPLECLICK_DIR = os.path.join(ROOT, "SimpleClick-1.0")
+WEIGHTS_DIR = os.path.join(ROOT, "weights", "simpleclick_models")
+def load_asset(name: str, caption: str = None):
+    path = os.path.join(SIMPLECLICK_DIR, "assets", name)
+    if os.path.exists(path):
+        st.image(path, caption=caption, use_container_width=True)
+    else:
+        st.warning(f"Asset `{name}` not found at `{path}`.")
+@st.cache_resource(show_spinner=False)
+def load_predictor(checkpoint_name: str, use_gpu: bool):
+    import torch
+    from infer_simpleclick import build_predictor
 
+    device = torch.device("cuda" if use_gpu and torch.cuda.is_available() else "cpu")
+    ckpt_path = os.path.join(WEIGHTS_DIR, checkpoint_name)
+    return build_predictor(ckpt_path, device)
 
-# 新增：绘图画布组件
-from streamlit_drawable_canvas import st_canvas
 
 # 页面全局配置
 st.set_page_config(
@@ -190,14 +202,10 @@ elif page == "iSegFormer":
     # Assuming load_asset function loads and displays the image
     # load_asset("architecture.jpg", caption="Figure 3: iSegFormer Architecture")
     load_asset("architecture.jpg", caption="Figure 3: iSegFormer Architecture")
-#4   
 elif page == "Interactive Demo":
     st.title("Interactive Segmentation Demo")
+    use_gpu = st.checkbox("Use GPU for demo", value=False)
 
-    # —— 用户选择是否用 GPU —— 
-    use_gpu = st.checkbox("Use GPU for interactive demo", value=False)
-
-    # —— 1. 上传图像 —— 
     uploaded = st.file_uploader("Upload a medical image", type=["png","jpg","jpeg"])
     if not uploaded:
         st.info("Please upload an image to begin.")
@@ -206,48 +214,44 @@ elif page == "Interactive Demo":
     img = Image.open(uploaded).convert("RGB")
     img_np = np.array(img)
 
-    # —— 2. 延迟加载模型 —— 
-    # 注意：现在 load_predictor 需要两个参数
+    # —— 延迟构建 predictor —— 
     predictor = load_predictor(
-        "./weights/simpleclick_models/cocolvis_vit_huge.pth",
-        use_gpu
+        checkpoint_name="cocolvis_vit_huge.pth",
+        use_gpu=use_gpu
     )
 
-    # —— 3. 点击类型选择 —— 
-    click_type = st.radio("Click type", ["Positive (foreground)", "Negative (background)"])
+    # —— 点击类型 & 画布 —— 
+    click_type = st.radio("Click type", ["Positive", "Negative"], index=0)
+    color = "#0f0" if click_type == "Positive" else "#f00"
 
-    # 4. 初始化点击列表
-    if "clicks" not in st.session_state:
-        st.session_state.clicks = []
-
-    # 5. 绘图画布：只允许“点”操作
-    canvas_result = st_canvas(
+    canvas_res = st_canvas(
         background_image=img,
         update_streamlit=True,
         drawing_mode="point",
-        stroke_color="#0f0" if click_type.startswith("Positive") else "#f00",
+        stroke_color=color,
         stroke_width=20,
-        key="seg_canvas",
+        key="canvas",
         height=img_np.shape[0],
         width=img_np.shape[1],
     )
 
-    # 6. 记录最新一次点击
-    if canvas_result.json_data and canvas_result.json_data.get("objects"):
-        for obj in canvas_result.json_data["objects"][-1:]:
+    # —— 记录点击 —— 
+    if "clicks" not in st.session_state:
+        st.session_state.clicks = []
+    if canvas_res.json_data and canvas_res.json_data.get("objects"):
+        for obj in canvas_res.json_data["objects"][-1:]:
             x, y = obj["path"][-1]
-            st.session_state.clicks.append((int(x), int(y), click_type.startswith("Positive")))
+            st.session_state.clicks.append((int(x), int(y), click_type=="Positive"))
 
-    # 7. 布局：左侧点击历史，右侧分割预览
+    # —— 显示历史 & 运行按钮 —— 
     col1, col2 = st.columns(2)
-
     with col1:
         st.subheader("Click History")
         for i, (x, y, is_pos) in enumerate(st.session_state.clicks, 1):
             mark = "🟢" if is_pos else "🔴"
             st.write(f"{i}. {mark} at ({x}, {y})")
         if st.button("🔄 Reset Clicks"):
-            st.session_state.clicks = []
+            st.session_state.clicks.clear()
 
     with col2:
         st.subheader("Segmentation Preview")
@@ -257,11 +261,9 @@ elif page == "Interactive Demo":
             overlay[mask > 0] = [255, 0, 0]
             st.image(
                 [img_np, overlay],
-                caption=["Input Image", "Overlay Result"],
+                caption=["Input Image", "Overlay"],
                 use_container_width=True
             )
-
-
 
 # 5. Demo（保持静态中心点Demo）
 elif page == "Demo":
