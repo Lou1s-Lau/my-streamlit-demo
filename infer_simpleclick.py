@@ -7,6 +7,10 @@ import gdown
 import torch
 import numpy as np
 from PIL import Image
+# download_checkpoint 的定义，以及:
+GDRIVE_ID = "1kMHYLPC8uKaCpiuF3kfrlFQK6LyOpXKZ"
+WEIGHTS_DIR = os.path.join(BASE_DIR, "weights", "simpleclick_models")
+WEIGHTS_PATH = os.path.join(WEIGHTS_DIR, "cocolvis_vit_huge.pth")
 
 # ─── 1. 把 SimpleClick-1.0 放到模块搜索路径最前面 ───
 BASE_DIR = os.path.dirname(__file__)
@@ -33,20 +37,22 @@ def download_checkpoint():
 # ─── 4. 构建模型函数 ───
 @torch.no_grad()
 def build_predictor(checkpoint: str, device: torch.device):
-    # 4.1 下载权重（若本地不存在）
+    # 1) 如果本地没有，就从 Google Drive 拉下来
     ckpt = download_checkpoint() if checkpoint == WEIGHTS_PATH else checkpoint
 
-    # 4.2 读取 config.yml
+    # 2) 读取项目根目录下 SimpleClick-1.0/config.yml 的配置
     cfg_path = os.path.join(SCC_DIR, "config.yml")
-    # return_edict=True 会得到一个类似 dict 的配置对象
     cfg = load_config_file(cfg_path, return_edict=True)
 
-    # 4.3 自动在 cfg.INTERACTIVE_MODELS_PATH 下查找权重文件
-    checkpoint_path = find_checkpoint(cfg.INTERACTIVE_MODELS_PATH, os.path.basename(ckpt))
-
-    # 4.4 加载模型（eval_ritm=False, cpu_dist_maps=True 同 demo.py）
-    model = load_is_model(checkpoint_path, device, eval_ritm=False, cpu_dist_maps=True)
+    # 3) 直接把本地 ckpt 路径传给 load_is_model，省掉 find_checkpoint
+    model = load_is_model(
+        ckpt,
+        device,
+        eval_ritm=False,
+        cpu_dist_maps=True
+    )
     return model
+
 
 # ─── 5. 推理函数（静态中心点击示例） ───
 @torch.no_grad()
