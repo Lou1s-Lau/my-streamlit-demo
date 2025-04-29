@@ -205,6 +205,7 @@ elif page == "iSegFormer":
 elif page == "Interactive Demo":
     st.title("Interactive Segmentation Demo")
     use_gpu = st.checkbox("Use GPU for demo", value=False)
+    debug = st.checkbox("🐞 Debug Mode", value=False)  # 新增：调试开关
 
     uploaded = st.file_uploader("Upload a medical image", type=["png","jpg","jpeg"])
     if not uploaded:
@@ -214,36 +215,50 @@ elif page == "Interactive Demo":
     img = Image.open(uploaded).convert("RGB")
     img_np = np.array(img)
 
-    # —— 延迟构建 predictor —— 
-    predictor = load_predictor(
-        checkpoint_name="cocolvis_vit_huge.pth",
-        use_gpu=use_gpu
-    )
+    # —— 1. 延迟构建 predictor（带异常捕获） —— 
+    try:
+        if debug: st.write("▶ Loading predictor…")
+        predictor = load_predictor(
+            checkpoint_name="cocolvis_vit_huge.pth",
+            use_gpu=use_gpu
+        )
+        if debug: st.write("✔ Predictor loaded successfully")
+    except Exception as e:
+        st.error("❌ Failed to load predictor")
+        st.exception(e)
+        st.stop()
 
-    # —— 点击类型 & 画布 —— 
+    # —— 2. 点击类型 & 画布 —— 
     click_type = st.radio("Click type", ["Positive", "Negative"], index=0)
     color = "#0f0" if click_type == "Positive" else "#f00"
+    if debug: st.write(f"▶ Drawing canvas with color={color}")
 
-    canvas_res = st_canvas(
-        background_image=img,
-        update_streamlit=True,
-        drawing_mode="point",
-        stroke_color=color,
-        stroke_width=20,
-        key="canvas",
-        height=img_np.shape[0],
-        width=img_np.shape[1],
-    )
+    try:
+        canvas_res = st_canvas(
+            background_image=img,
+            update_streamlit=True,
+            drawing_mode="point",
+            stroke_color=color,
+            stroke_width=20,
+            key="canvas",
+            height=img_np.shape[0],
+            width=img_np.shape[1],
+        )
+    except Exception as e:
+        st.error("❌ Canvas 初始化失败")
+        st.exception(e)
+        st.stop()
 
-    # —— 记录点击 —— 
+    # —— 3. 记录点击 —— 
     if "clicks" not in st.session_state:
         st.session_state.clicks = []
     if canvas_res.json_data and canvas_res.json_data.get("objects"):
-        for obj in canvas_res.json_data["objects"][-1:]:
-            x, y = obj["path"][-1]
-            st.session_state.clicks.append((int(x), int(y), click_type=="Positive"))
+        obj = canvas_res.json_data["objects"][-1]
+        x, y = obj["path"][-1]
+        st.session_state.clicks.append((int(x), int(y), click_type=="Positive"))
+        if debug: st.write("➕ New click:", st.session_state.clicks[-1])
 
-    # —— 显示历史 & 运行按钮 —— 
+    # —— 4. 显示 & 运行预测 —— 
     col1, col2 = st.columns(2)
     with col1:
         st.subheader("Click History")
@@ -252,18 +267,26 @@ elif page == "Interactive Demo":
             st.write(f"{i}. {mark} at ({x}, {y})")
         if st.button("🔄 Reset Clicks"):
             st.session_state.clicks.clear()
+            if debug: st.write("– Cleared clicks")
 
     with col2:
         st.subheader("Segmentation Preview")
         if st.button("Run / Update Segmentation"):
-            mask = predictor.get_prediction(img_np, st.session_state.clicks)
-            overlay = img_np.copy()
-            overlay[mask > 0] = [255, 0, 0]
-            st.image(
-                [img_np, overlay],
-                caption=["Input Image", "Overlay"],
-                use_container_width=True
-            )
+            try:
+                if debug: st.write("▶ Running predictor.get_prediction…")
+                mask = predictor.get_prediction(img_np, st.session_state.clicks)
+                if debug: st.write("✔ Prediction done, mask shape:", mask.shape)
+                overlay = img_np.copy()
+                overlay[mask > 0] = [255, 0, 0]
+                st.image(
+                    [img_np, overlay],
+                    caption=["Input Image", "Overlay"],
+                    use_container_width=True
+                )
+            except Exception as e:
+                st.error("❌ 预测失败")
+                st.exception(e)
+
 
 # 5. Demo（保持静态中心点Demo）
 elif page == "Demo":
