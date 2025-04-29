@@ -1,3 +1,6 @@
+import sys, os
+sys.path.append(os.path.join(os.path.dirname(__file__), "SimpleClick-1.0"))
+
 import streamlit as st
 from PIL import Image
 import numpy as np
