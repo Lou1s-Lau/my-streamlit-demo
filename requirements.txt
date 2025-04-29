@@ -6,8 +6,9 @@ torchvision
 numpy
 Pillow
 gdown
-opencv-python-headless
-tensorboard
 easydict
+opencv-python-headless
 albumentations==1.3.0
+tensorboard
+-e .
 
