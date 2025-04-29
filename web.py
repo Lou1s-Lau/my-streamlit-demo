@@ -177,7 +177,7 @@ elif page == "iSegFormer":
     # Assuming load_asset function loads and displays the image
     # load_asset("architecture.jpg", caption="Figure 3: iSegFormer Architecture")
     load_asset("architecture.jpg", caption="Figure 3: iSegFormer Architecture")
-    
+#4   
 elif page == "Interactive Demo":
     st.title("Interactive Segmentation Demo")
 
@@ -191,7 +191,14 @@ elif page == "Interactive Demo":
     img_np = np.array(img)
 
     # 2. 延迟加载模型（只在第一次调用时执行）
-    predictor = load_predictor("./weights/simpleclick_models/cocolvis_vit_huge.pth")
+    # 先让用户选择是否使用 GPU
+    use_gpu = st.checkbox("Use GPU for interactive demo", value=False)
+
+    # 然后再加载 predictor，并把 use_gpu 传进去
+    predictor = load_predictor(
+        "./weights/simpleclick_models/cocolvis_vit_huge.pth",
+        use_gpu
+    )
 
     # 3. 点击类型选择
     click_type = st.radio("Click type", ["Positive (foreground)", "Negative (background)"])
