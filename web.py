@@ -29,13 +29,21 @@ def load_asset(name, caption=None):
         st.image(path, caption=caption, use_container_width=True)
     else:
         st.warning(f"Asset `{name}` not found at `{path}`. Please upload it there.")
+import torch
+import streamlit as st
+
 @st.cache_resource(show_spinner=False)
 def load_predictor(checkpoint_path: str, use_gpu: bool):
-    import torch
-    # 根据用户勾选决定用 CPU 还是 GPU（如果可用）
+    """
+    checkpoint_path: 权重文件路径
+    use_gpu:       用户是否勾选使用 GPU
+    """
+    # 根据 use_gpu 决定用 CPU 还是 GPU
     device = torch.device("cuda" if use_gpu and torch.cuda.is_available() else "cpu")
     from infer_simpleclick import build_predictor
+    # 这里要传入 device
     return build_predictor(checkpoint_path, device)
+
 
 
 # 1. Overview
@@ -181,7 +189,10 @@ elif page == "iSegFormer":
 elif page == "Interactive Demo":
     st.title("Interactive Segmentation Demo")
 
-    # 1. 上传并预览原图
+    # —— 用户选择是否用 GPU —— 
+    use_gpu = st.checkbox("Use GPU for interactive demo", value=False)
+
+    # —— 1. 上传图像 —— 
     uploaded = st.file_uploader("Upload a medical image", type=["png","jpg","jpeg"])
     if not uploaded:
         st.info("Please upload an image to begin.")
@@ -190,17 +201,14 @@ elif page == "Interactive Demo":
     img = Image.open(uploaded).convert("RGB")
     img_np = np.array(img)
 
-    # 2. 延迟加载模型（只在第一次调用时执行）
-    # 先让用户选择是否使用 GPU
-    use_gpu = st.checkbox("Use GPU for interactive demo", value=False)
-
-    # 然后再加载 predictor，并把 use_gpu 传进去
+    # —— 2. 延迟加载模型 —— 
+    # 注意：现在 load_predictor 需要两个参数
     predictor = load_predictor(
         "./weights/simpleclick_models/cocolvis_vit_huge.pth",
         use_gpu
     )
 
-    # 3. 点击类型选择
+    # —— 3. 点击类型选择 —— 
     click_type = st.radio("Click type", ["Positive (foreground)", "Negative (background)"])
 
     # 4. 初始化点击列表
