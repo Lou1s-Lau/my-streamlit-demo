@@ -35,14 +35,15 @@ def download_checkpoint():
 # ─── 4. 构建 Predictor 的函数 ───
 @torch.no_grad()
 def build_predictor(checkpoint: str, device: torch.device):
-    # 4.1 下载或使用传入的 checkpoint
-    ckpt = download_checkpoint() if checkpoint == WEIGHTS_PATH else checkpoint
+    # ——— 1. 无条件下载／返回本地 checkpoint 路径 ———
+    # download_checkpoint() 会在 weights/simpleclick_models 下下载或返回已有 .pth
+    ckpt = download_checkpoint()
 
-    # 4.2 读取 config.yml（SimpleClick-1.0 根目录下）
+    # ——— 2. 读取 config.yml ———
     cfg_path = os.path.join(SCC_DIR, "config.yml")
     cfg = load_config_file(cfg_path, return_edict=True)
 
-    # 4.3 直接用 ckpt 路径加载模型，跳过 find_checkpoint
+    # ——— 3. 直接用 ckpt 加载模型 ———
     model = load_is_model(
         ckpt,
         device,
@@ -50,6 +51,7 @@ def build_predictor(checkpoint: str, device: torch.device):
         cpu_dist_maps=True
     )
     return model
+
 
 # ─── 5. 推理函数：根据 clicks 返回二值 mask ───
 @torch.no_grad()
