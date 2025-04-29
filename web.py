@@ -30,11 +30,13 @@ def load_asset(name, caption=None):
     else:
         st.warning(f"Asset `{name}` not found at `{path}`. Please upload it there.")
 @st.cache_resource(show_spinner=False)
-def load_predictor(checkpoint_path: str):
-    # 这里假设你在 infer_simpleclick.py 中封装了 build_predictor()
-    # 它返回一个 predictor 对象，包含 get_prediction(image_np, clicks) 方法
+def load_predictor(checkpoint_path: str, use_gpu: bool):
+    import torch
+    # 根据用户勾选决定用 CPU 还是 GPU（如果可用）
+    device = torch.device("cuda" if use_gpu and torch.cuda.is_available() else "cpu")
     from infer_simpleclick import build_predictor
-    return build_predictor(checkpoint_path)
+    return build_predictor(checkpoint_path, device)
+
 
 # 1. Overview
 if page == "Overview":
