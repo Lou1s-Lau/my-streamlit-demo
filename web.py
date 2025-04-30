@@ -1,11 +1,25 @@
-import os
+import os, sys
+
+# 1. 当前脚本目录
+THIS_DIR = os.path.dirname(__file__)              
+# 2. 父目录，也就是 projects/
+PARENT_DIR = os.path.abspath(os.path.join(THIS_DIR, os.pardir))
+# 3. 指向并列的 simpleclick 文件夹
+SIMPLECLICK_DIR = os.path.join(PARENT_DIR, "SimpleClick")
+# 4. 把它加到模块搜索路径最前面
+sys.path.insert(0, SIMPLECLICK_DIR)
+
 import uuid
 import tempfile
+import io
+import base64
+from streamlit.elements import image as st_image
 
 import streamlit as st
 from PIL import Image
 import numpy as np
 from streamlit_drawable_canvas import st_canvas
+
 import streamlit.components.v1 as components  # 如需 iframe 嵌入可保留
 # —— 全局常量 & 路径 —— 
 ROOT = os.path.dirname(__file__)
@@ -22,9 +36,12 @@ def load_predictor(checkpoint_name: str, use_gpu: bool):
     import torch
     from infer_simpleclick import build_predictor
 
-    device = torch.device("cuda" if use_gpu and torch.cuda.is_available() else "cpu")
+    device = torch.device(
+        "cuda" if use_gpu and torch.cuda.is_available() else "cpu"
+    )
     ckpt_path = os.path.join(WEIGHTS_DIR, checkpoint_name)
     return build_predictor(ckpt_path, device)
+
 
 
 # 页面全局配置
@@ -47,7 +64,6 @@ def load_asset(name, caption=None):
     else:
         st.warning(f"Asset `{name}` not found at `{path}`. Please upload it there.")
 import torch
-import streamlit as st
 
 @st.cache_resource(show_spinner=False)
 def load_predictor(checkpoint_path: str, use_gpu: bool):
@@ -204,9 +220,11 @@ elif page == "iSegFormer":
     load_asset("architecture.jpg", caption="Figure 3: iSegFormer Architecture")
 elif page == "Interactive Demo":
     st.title("Interactive Segmentation Demo")
-    use_gpu = st.checkbox("Use GPU for demo", value=False)
-    debug = st.checkbox("🐞 Debug Mode", value=False)  # 新增：调试开关
 
+    # —— 1. GPU 选项 —— 
+    use_gpu = st.checkbox("Use GPU for interactive demo", value=False)
+
+    # —— 2. 上传图像 —— 
     uploaded = st.file_uploader("Upload a medical image", type=["png","jpg","jpeg"])
     if not uploaded:
         st.info("Please upload an image to begin.")
@@ -215,77 +233,66 @@ elif page == "Interactive Demo":
     img = Image.open(uploaded).convert("RGB")
     img_np = np.array(img)
 
-    # —— 1. 延迟构建 predictor（带异常捕获） —— 
-    try:
-        if debug: st.write("▶ Loading predictor…")
-        predictor = load_predictor(
-            checkpoint_name="cocolvis_vit_huge.pth",
-            use_gpu=use_gpu
-        )
-        if debug: st.write("✔ Predictor loaded successfully")
-    except Exception as e:
-        st.error("❌ Failed to load predictor")
-        st.exception(e)
-        st.stop()
+    # —— 3. 延迟加载模型 —— 
+    predictor = load_predictor(
+        "./weights/simpleclick_models/cocolvis_vit_huge.pth",
+        use_gpu
+    )
 
-    # —— 2. 点击类型 & 画布 —— 
-    click_type = st.radio("Click type", ["Positive", "Negative"], index=0)
-    color = "#0f0" if click_type == "Positive" else "#f00"
-    if debug: st.write(f"▶ Drawing canvas with color={color}")
+    # —— 4. 点击类型 —— 
+    click_type = st.radio("Click type", ["Positive (foreground)", "Negative (background)"])
 
-    try:
-        canvas_res = st_canvas(
-            background_image=img,
-            update_streamlit=True,
-            drawing_mode="point",
-            stroke_color=color,
-            stroke_width=20,
-            key="canvas",
-            height=img_np.shape[0],
-            width=img_np.shape[1],
-        )
-    except Exception as e:
-        st.error("❌ Canvas 初始化失败")
-        st.exception(e)
-        st.stop()
-
-    # —— 3. 记录点击 —— 
+    # —— 5. 初始化点击列表 —— 
     if "clicks" not in st.session_state:
         st.session_state.clicks = []
-    if canvas_res.json_data and canvas_res.json_data.get("objects"):
-        obj = canvas_res.json_data["objects"][-1]
-        x, y = obj["path"][-1]
-        st.session_state.clicks.append((int(x), int(y), click_type=="Positive"))
-        if debug: st.write("➕ New click:", st.session_state.clicks[-1])
 
-    # —— 4. 显示 & 运行预测 —— 
+    # —— 6. 绘图画布 —— 
+    canvas_result = st_canvas(
+        background_image=img,
+        update_streamlit=True,
+        drawing_mode="point",
+        stroke_color="#0f0" if click_type.startswith("Positive") else "#f00",
+        stroke_width=20,
+        key="seg_canvas",
+        height=img_np.shape[0],
+        width=img_np.shape[1],
+    )
+
+    # —— 7. 记录点击 —— 
+    if canvas_result.json_data and canvas_result.json_data.get("objects"):
+        for obj in canvas_result.json_data["objects"][-1:]:
+            # 兼容 point 模式：圆的中心坐标 = left + radius, top + radius
+            left   = obj.get("left", 0)
+            top    = obj.get("top", 0)
+            radius = obj.get("radius", 0)
+            x = left + radius
+            y = top  + radius
+            st.session_state.clicks.append((int(x), int(y), click_type.startswith("Positive")))
+
+    # —— 8. 布局：左侧点击历史，右侧分割预览 —— 
     col1, col2 = st.columns(2)
+
     with col1:
         st.subheader("Click History")
         for i, (x, y, is_pos) in enumerate(st.session_state.clicks, 1):
             mark = "🟢" if is_pos else "🔴"
             st.write(f"{i}. {mark} at ({x}, {y})")
         if st.button("🔄 Reset Clicks"):
-            st.session_state.clicks.clear()
-            if debug: st.write("– Cleared clicks")
+            st.session_state.clicks = []
 
     with col2:
         st.subheader("Segmentation Preview")
         if st.button("Run / Update Segmentation"):
-            try:
-                if debug: st.write("▶ Running predictor.get_prediction…")
-                mask = predictor.get_prediction(img_np, st.session_state.clicks)
-                if debug: st.write("✔ Prediction done, mask shape:", mask.shape)
-                overlay = img_np.copy()
-                overlay[mask > 0] = [255, 0, 0]
-                st.image(
-                    [img_np, overlay],
-                    caption=["Input Image", "Overlay"],
-                    use_container_width=True
-                )
-            except Exception as e:
-                st.error("❌ 预测失败")
-                st.exception(e)
+            mask = get_prediction(predictor, img_np, st.session_state.clicks)
+            overlay = img_np.copy()
+            overlay[mask > 0] = [255, 0, 0]
+            st.image(
+                [img_np, overlay],
+                caption=["Input Image", "Overlay Result"],
+                use_container_width=True
+            )
+
+
 
 
 # 5. Demo（保持静态中心点Demo）
