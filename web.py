@@ -1,38 +1,14 @@
-import os, sys
-import uuid
-import tempfile
-import io
-import base64
-from streamlit.elements import image as st_image
-import numpy as np
-from streamlit_drawable_canvas import st_canvas
-from infer_simpleclick import build_predictor, get_prediction  # 或者 load_predictor, get_prediction
 import streamlit as st
 from PIL import Image
-
-import streamlit.components.v1 as components  # 如需 iframe 嵌入可保留
-# —— 全局常量 & 路径 —— 
-ROOT = os.path.dirname(__file__)
-SIMPLECLICK_DIR = os.path.join(ROOT, "SimpleClick-1.0")
-WEIGHTS_DIR = os.path.join(ROOT, "weights", "simpleclick_models")
-def load_asset(name: str, caption: str = None):
-    path = os.path.join(SIMPLECLICK_DIR, "assets", name)
-    if os.path.exists(path):
-        st.image(path, caption=caption, use_container_width=True)
-    else:
-        st.warning(f"Asset `{name}` not found at `{path}`.")
-@st.cache_resource(show_spinner=False)
-def load_predictor(checkpoint_name: str, use_gpu: bool):
-    import torch
-    from infer_simpleclick import build_predictor
-
-    device = torch.device(
-        "cuda" if use_gpu and torch.cuda.is_available() else "cpu"
-    )
-    ckpt_path = os.path.join(WEIGHTS_DIR, checkpoint_name)
-    return build_predictor(ckpt_path, device)
+import numpy as np
+import tempfile, subprocess, uuid, os
+from streamlit_drawable_canvas import st_canvas
+import tempfile, uuid, os
+# 不要在顶部 import cv2/torch/gdown，留到后面 Demo 里再导入
 
 
+# 新增：绘图画布组件
+from streamlit_drawable_canvas import st_canvas
 
 # 页面全局配置
 st.set_page_config(
@@ -53,21 +29,12 @@ def load_asset(name, caption=None):
         st.image(path, caption=caption, use_container_width=True)
     else:
         st.warning(f"Asset `{name}` not found at `{path}`. Please upload it there.")
-import torch
-
 @st.cache_resource(show_spinner=False)
-def load_predictor(checkpoint_path: str, use_gpu: bool):
-    """
-    checkpoint_path: 权重文件路径
-    use_gpu:       用户是否勾选使用 GPU
-    """
-    # 根据 use_gpu 决定用 CPU 还是 GPU
-    device = torch.device("cuda" if use_gpu and torch.cuda.is_available() else "cpu")
+def load_predictor(checkpoint_path: str):
+    # 这里假设你在 infer_simpleclick.py 中封装了 build_predictor()
+    # 它返回一个 predictor 对象，包含 get_prediction(image_np, clicks) 方法
     from infer_simpleclick import build_predictor
-    # 这里要传入 device
-    return build_predictor(checkpoint_path, device)
-
-
+    return build_predictor(checkpoint_path)
 
 # 1. Overview
 if page == "Overview":
@@ -208,13 +175,11 @@ elif page == "iSegFormer":
     # Assuming load_asset function loads and displays the image
     # load_asset("architecture.jpg", caption="Figure 3: iSegFormer Architecture")
     load_asset("architecture.jpg", caption="Figure 3: iSegFormer Architecture")
+    
 elif page == "Interactive Demo":
     st.title("Interactive Segmentation Demo")
 
-    # —— 1. GPU 选项 —— 
-    use_gpu = st.checkbox("Use GPU for interactive demo", value=False)
-
-    # —— 2. 上传图像 —— 
+    # 1. 上传并预览原图
     uploaded = st.file_uploader("Upload a medical image", type=["png","jpg","jpeg"])
     if not uploaded:
         st.info("Please upload an image to begin.")
@@ -223,20 +188,17 @@ elif page == "Interactive Demo":
     img = Image.open(uploaded).convert("RGB")
     img_np = np.array(img)
 
-    # —— 3. 延迟加载模型 —— 
-    predictor = load_predictor(
-        "./weights/simpleclick_models/cocolvis_vit_huge.pth",
-        use_gpu
-    )
+    # 2. 延迟加载模型（只在第一次调用时执行）
+    predictor = load_predictor("./weights/simpleclick_models/cocolvis_vit_huge.pth")
 
-    # —— 4. 点击类型 —— 
+    # 3. 点击类型选择
     click_type = st.radio("Click type", ["Positive (foreground)", "Negative (background)"])
 
-    # —— 5. 初始化点击列表 —— 
+    # 4. 初始化点击列表
     if "clicks" not in st.session_state:
         st.session_state.clicks = []
 
-    # —— 6. 绘图画布 —— 
+    # 5. 绘图画布：只允许“点”操作
     canvas_result = st_canvas(
         background_image=img,
         update_streamlit=True,
@@ -248,18 +210,13 @@ elif page == "Interactive Demo":
         width=img_np.shape[1],
     )
 
-    # —— 7. 记录点击 —— 
+    # 6. 记录最新一次点击
     if canvas_result.json_data and canvas_result.json_data.get("objects"):
         for obj in canvas_result.json_data["objects"][-1:]:
-            # 兼容 point 模式：圆的中心坐标 = left + radius, top + radius
-            left   = obj.get("left", 0)
-            top    = obj.get("top", 0)
-            radius = obj.get("radius", 0)
-            x = left + radius
-            y = top  + radius
+            x, y = obj["path"][-1]
             st.session_state.clicks.append((int(x), int(y), click_type.startswith("Positive")))
 
-    # —— 8. 布局：左侧点击历史，右侧分割预览 —— 
+    # 7. 布局：左侧点击历史，右侧分割预览
     col1, col2 = st.columns(2)
 
     with col1:
@@ -273,7 +230,7 @@ elif page == "Interactive Demo":
     with col2:
         st.subheader("Segmentation Preview")
         if st.button("Run / Update Segmentation"):
-            mask = get_prediction(predictor, img_np, st.session_state.clicks)
+            mask = predictor.get_prediction(img_np, st.session_state.clicks)
             overlay = img_np.copy()
             overlay[mask > 0] = [255, 0, 0]
             st.image(
@@ -281,7 +238,6 @@ elif page == "Interactive Demo":
                 caption=["Input Image", "Overlay Result"],
                 use_container_width=True
             )
-
 
 
 
