@@ -36,7 +36,7 @@ from isegm.inference.utils import load_is_model
 GDRIVE_ID    = "1kMHYLPC8uKaCpiuF3kfrlFQK6LyOpXKZ"
 WEIGHTS_DIR  = os.path.join(BASE_DIR, "weights", "simpleclick_models")
 WEIGHTS_PATH = os.path.join(WEIGHTS_DIR, "cocolvis_vit_huge.pth")
-download_checkpoint()
+# download_checkpoint()
 def download_checkpoint():
     """如果本地没有，就从 Google Drive 下到 weights/simpleclick_models 文件夹里"""
     os.makedirs(WEIGHTS_DIR, exist_ok=True)
