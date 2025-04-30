@@ -1,24 +1,14 @@
 import os, sys
-
-# 1. 当前脚本目录
-THIS_DIR = os.path.dirname(__file__)              
-# 2. 父目录，也就是 projects/
-PARENT_DIR = os.path.abspath(os.path.join(THIS_DIR, os.pardir))
-# 3. 指向并列的 simpleclick 文件夹
-SIMPLECLICK_DIR = os.path.join(PARENT_DIR, "SimpleClick")
-# 4. 把它加到模块搜索路径最前面
-sys.path.insert(0, SIMPLECLICK_DIR)
-
 import uuid
 import tempfile
 import io
 import base64
 from streamlit.elements import image as st_image
-
-import streamlit as st
-from PIL import Image
 import numpy as np
 from streamlit_drawable_canvas import st_canvas
+from infer_simpleclick import build_predictor, get_prediction  # 或者 load_predictor, get_prediction
+import streamlit as st
+from PIL import Image
 
 import streamlit.components.v1 as components  # 如需 iframe 嵌入可保留
 # —— 全局常量 & 路径 —— 
