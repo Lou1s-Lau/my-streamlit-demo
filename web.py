@@ -176,10 +176,11 @@ elif page == "iSegFormer":
     # load_asset("architecture.jpg", caption="Figure 3: iSegFormer Architecture")
     load_asset("architecture.jpg", caption="Figure 3: iSegFormer Architecture")
     
+# 4. Interactive Demo
 elif page == "Interactive Demo":
     st.title("Interactive Segmentation Demo")
 
-    # 1. 上传并预览原图
+    # —— 1. 上传并预览原图 —— 
     uploaded = st.file_uploader("Upload a medical image", type=["png","jpg","jpeg"])
     if not uploaded:
         st.info("Please upload an image to begin.")
@@ -188,37 +189,39 @@ elif page == "Interactive Demo":
     img = Image.open(uploaded).convert("RGB")
     img_np = np.array(img)
 
-    # 2. 延迟加载模型（只在第一次调用时执行）
+    # —— 2. 延迟加载模型，只执行一次 —— 
     predictor = load_predictor("./weights/simpleclick_models/cocolvis_vit_huge.pth")
 
-    # 3. 点击类型选择
+    # —— 3. 点击类型选择 —— 
     click_type = st.radio("Click type", ["Positive (foreground)", "Negative (background)"])
 
-    # 4. 初始化点击列表
+    # —— 4. 初始化或重置点击列表 —— 
     if "clicks" not in st.session_state:
-        st.session_state.clicks = []
+        st.session_state.clicks = []  # 存放 (x, y, is_positive)
 
-    # 5. 绘图画布：只允许“点”操作
+    # —— 5. 可绘制画布：只允许点操作 —— 
     canvas_result = st_canvas(
-        background_image=img,
-        update_streamlit=True,
-        drawing_mode="point",
+        fill_color="rgba(0,0,0,0)",
         stroke_color="#0f0" if click_type.startswith("Positive") else "#f00",
         stroke_width=20,
+        background_image=img,
+        drawing_mode="point",
         key="seg_canvas",
+        update_streamlit=True,
         height=img_np.shape[0],
         width=img_np.shape[1],
     )
 
-    # 6. 记录最新一次点击
+    # —— 6. 记录最新一次点击 —— 
     if canvas_result.json_data and canvas_result.json_data.get("objects"):
         for obj in canvas_result.json_data["objects"][-1:]:
             x, y = obj["path"][-1]
-            st.session_state.clicks.append((int(x), int(y), click_type.startswith("Positive")))
+            st.session_state.clicks.append(
+                (int(x), int(y), click_type.startswith("Positive"))
+            )
 
-    # 7. 布局：左侧点击历史，右侧分割预览
+    # —— 7. 左右布局：点击历史 vs. 分割结果 —— 
     col1, col2 = st.columns(2)
-
     with col1:
         st.subheader("Click History")
         for i, (x, y, is_pos) in enumerate(st.session_state.clicks, 1):
@@ -230,15 +233,14 @@ elif page == "Interactive Demo":
     with col2:
         st.subheader("Segmentation Preview")
         if st.button("Run / Update Segmentation"):
+            # 调用模型，返回二值 mask (H×W)
             mask = predictor.get_prediction(img_np, st.session_state.clicks)
+            # 叠加：把 mask 区域染红
             overlay = img_np.copy()
             overlay[mask > 0] = [255, 0, 0]
-            st.image(
-                [img_np, overlay],
-                caption=["Input Image", "Overlay Result"],
-                use_container_width=True
-            )
-
+            st.image([img_np, overlay],
+                     caption=["Input Image", "Overlay Result"],
+                     use_container_width=True)
 
 
 # 5. Demo（保持静态中心点Demo）
