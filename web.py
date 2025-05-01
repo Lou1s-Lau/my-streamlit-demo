@@ -81,13 +81,13 @@ These multi‑planar MRI images serve as the input for interactive segmentation 
 elif page == "Background":
     st.title("Background: Deep Learning & Medical Image Segmentation")
     st.markdown("""
-    Deep learning has profoundly transformed medical image analysis. By employing multi-layer neural networks, these techniques automatically learn hierarchical features directly from image data—progressing from simple edges and textures in early layers to complex anatomical structures or pathological patterns in deeper layers. This capability is central to advancing image segmentation for clinical applications.
+    Deep learning has profoundly transformed medical image analysis. By employing multi-layer neural networks, these techniques automatically learn hierical features directly from image data—progressing from simple edges and textures in early layers to complex anatomical structures or pathological patterns in deeper layers. This capability is central to advancing image segmentation for clinical applications.
 
-    Within this domain, two primary paradigms exist: fully automated segmentation and interactive segmentation, often leveraging distinct deep learning architectures like Convolutional Neural Networks (CNNs) and Vision Transformers (ViTs).
+    Within this domain, two primary paradigms exist: fully automated segmentation and interactive segmentation, often leveraging distinct deep learning itectures like Convolutional Neural Networks (CNNs) and Vision Transformers (ViTs).
 
     ### Fully Automated Segmentation: Efficiency and Challenges
 
-    **Convolutional Neural Networks (CNNs)** have long been the workhorse for **fully automated** medical image segmentation. Architectures like the U-Net excel at capturing local spatial patterns using learnable convolutional kernels. A notable example is the work by **Zhang et al. (2021)**, who utilized a CNN-based U-Net enhanced with a **spatial attention mechanism** for automated knee cartilage segmentation. This attention mechanism mimics human visual focus, allowing the model to concentrate on critical image regions, thereby improving accuracy.
+    **Convolutional Neural Networks (CNNs)** have long been the workhorse for **fully automated** medical image segmentation. itectures like the U-Net excel at capturing local spatial patterns using learnable convolutional kernels. A notable example is the work by **Zhang et al. (2021)**, who utilized a CNN-based U-Net enhanced with a **spatial attention mechanism** for automated knee cartilage segmentation. This attention mechanism mimics human visual focus, allowing the model to concentrate on critical image regions, thereby improving accuracy.
 
     The primary advantage of fully automated methods lies in their efficiency and consistency. They can process large batches of images without human intervention, streamlining workflows. However, their performance can degrade when faced with certain challenges:
     * **Ambiguous or Fuzzy Boundaries:** Low contrast between tissues, such as tumor margins obscured by edema, can confuse automated algorithms.
@@ -116,7 +116,7 @@ elif page == "Background":
 
     ### The Spectrum of Segmentation Approaches
 
-    In summary, fully automated and interactive segmentation methods represent a spectrum of tools. Fully automated systems, exemplified by the CNN-based approach of Zhang et al. (2021), offer high throughput and consistency for standardized tasks. Interactive systems, such as iSegFormer and SimpleClick leveraging Transformer architectures, provide clinician-driven precision, adaptability to ambiguous cases, and the ability to leverage expert knowledge dynamically. They excel where automated methods might falter but require user input. The choice between them—or a combination thereof—depends on the specific clinical application, the complexity of the images, and the available resources. Ultimately, both approaches aim to enhance the speed and accuracy of medical diagnoses derived from imaging data.
+    In summary, fully automated and interactive segmentation methods represent a spectrum of tools. Fully automated systems, exemplified by the CNN-based approach of Zhang et al. (2021), offer high throughput and consistency for standardized tasks. Interactive systems, such as iSegFormer and SimpleClick leveraging Transformer itectures, provide clinician-driven precision, adaptability to ambiguous cases, and the ability to leverage expert knowledge dynamically. They excel where automated methods might falter but require user input. The choice between them—or a combination thereof—depends on the specific clinical application, the complexity of the images, and the available resources. Ultimately, both approaches aim to enhance the speed and accuracy of medical diagnoses derived from imaging data.
     """)
         # —— Side-by-side comparison: two columns for images —— 
     st.markdown("### Fully Automatic vs. Interactive Segmentation Workflow")
@@ -189,7 +189,7 @@ In short, **iSegFormer** shows how a window-based Transformer plus a tiny decode
 
     # Assuming load_asset function loads and displays the image
     # load_asset("architecture.jpg", caption="Figure 3: iSegFormer Architecture")
-    load_asset("architecture.png", caption="Figure 3: iSegFormer Architecture")
+    load_asset("iSegFormer.png", caption="Figure 3: iSegFormer Architecture")
     
 # 4. Interactive Demo
 elif page == "Interactive Demo":
