@@ -185,6 +185,7 @@ A window-based Transformer over 3-D data is memory-hungry; the reference code us
 
 In short, iSegFormer shows that a **windowed Transformer + tiny decoder** can deliver **high-precision, low-latency** interactive 3-D segmentation—so long as sufficiently large GPUs are available—making it a viable tool for challenging musculoskeletal MRI cases.
 
+    """, unsafe_allow_html=True)
 
     # Assuming load_asset function loads and displays the image
     # load_asset("architecture.jpg", caption="Figure 3: iSegFormer Architecture")
