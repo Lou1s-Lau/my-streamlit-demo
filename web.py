@@ -146,44 +146,44 @@ elif page == "Background":
 elif page == "iSegFormer":
     st.title("iSegFormer: Interactive 3D Segmentation (Liu et al., MICCAI 2022)")
     st.markdown("""
-    The **iSegFormer** framework, introduced by Liu et al. at **MICCAI 2022**, is an interactive-segmentation model tailored for **3-D knee MRI**. Cartilage in 3-D scans is thin, highly curved, and often merges visually with bone or meniscus, producing *fuzzy boundaries* that frustrate purely automatic methods. Slice-by-slice 2-D tools miss cross-slice context, while heavy 3-D networks demand large GPUs yet still falter on small datasets.
+    The **iSegFormer** framework, introduced by Liu *et al.* at the top-tier **MICCAI 2022** conference, is a landmark in **interactive segmentation** for **3-D knee MRI**. Cartilage segmentation is notoriously hard: the layer is thin and curved, and its signal often *blends* into bone or meniscus, creating so-called *fuzzy boundaries*. Traditional 2-D slice-by-slice tools fail to see 3-D context; fully automatic 3-D networks need lots of data and GPU memory yet still degrade when training data are scarce.
 
 ---
 
-### Architectural highlights  
+### Architectural Highlights  
 
-* **Hierarchical Swin-Transformer encoder** — Swin splits a 3-D volume into small *windows* and runs self-attention inside each window; the windows then shift slightly (*shifted-window attention*) so neighboring windows also exchange information. This design captures **local detail and global context at once**.  
-* **Lightweight MLP decoder** — A tiny fully connected network (multi-layer perceptron) converts the encoder’s features back into a segmentation mask, keeping latency low during interactive updates.
-
----
-
-### How the interaction works  
-
-> **Four-step loop**  
-> 1. The physician adds several **positive clicks** (🟢 inside cartilage) and **negative clicks** (🔴 outside cartilage).  
-> 2. Each click is encoded in an extra channel (foreground = 1, background = –1, elsewhere = 0) and concatenated to the MRI.  
-> 3. iSegFormer re-runs a forward pass in **< 5 ms on a single A40 GPU**, producing an updated 3-D mask.  
-> 4. The refined mask overlays the image in real time; the doctor repeats step 1 if further refinement is needed.
-
-With this **sparse guidance**—often < 5 clicks in only a few key slices—the model quickly converges on a clinically usable contour.
+* **Hierarchical Swin-Transformer encoder.** Swin Transformer first chops the volume into small “windows,” runs self-attention inside each window, then **shifts** the windows so neighboring windows also talk to each other (*shifted-window attention*). This gives both **local detail** and **global context**—something vanilla CNNs often miss.  
+* **Lightweight MLP decoder.** The encoder’s features pass through a tiny multi-layer perceptron (MLP)—essentially a few fully connected layers—so the network can **refresh the mask in milliseconds** after each user click. A small decoder keeps interaction latency low.
 
 ---
 
-### Performance  
+### How the Interaction Works  
 
-* Public knee-cartilage datasets report **Dice similarity > 0.90** (Dice = 1 is perfect overlap).  
-* Minimal click effort yet near-expert accuracy.  
-* Fine-tuning with only a handful of annotated volumes outperforms many fully automatic baselines that use larger training sets.
-
----
-
-### Practical requirements  
-
-A window-based Transformer over 3-D data is memory-hungry; the reference code uses an RTX A5000 (24 GB VRAM). Practical deployments may downsample, batch in patches, or offload inference to the cloud. Startup (loading weights, window mapping) takes ≈ 20–30 s, but **each subsequent interaction refreshes in milliseconds**, giving an almost live editing experience.
+1. The radiologist drops several clicks: 🟢 **positive** clicks inside cartilage, 🔴 **negative** clicks just outside.  
+2. Each click is encoded as an extra channel (foreground = +1, background = –1, elsewhere = 0) and concatenated to the MRI.  
+3. iSegFormer reruns a forward pass in **\< 5 ms** on a single A40 GPU, producing an updated 3-D mask.  
+4. The refined mask overlays the image; the doctor adds more clicks only if needed.  
+*This “sparse guidance” loop usually converges with \< 5 clicks across just a few key slices.*
 
 ---
 
-In short, iSegFormer shows that a **windowed Transformer + tiny decoder** can deliver **high-precision, low-latency** interactive 3-D segmentation—so long as sufficiently large GPUs are available—making it a viable tool for challenging musculoskeletal MRI cases.
+### Performance & Value  
+
+* Reported **Dice Similarity Coefficient (DSC) > 0.90** for knee cartilage. *(Dice ranges 0–1; 1 is perfect overlap.)*  
+* Click effort is minimal—seconds of interaction versus minutes of manual tracing.  
+* With a handful of annotated cases for **fine-tuning**, iSegFormer matches or beats 3-D fully automatic models trained on much larger datasets.
+
+---
+
+### Computational Considerations  
+
+* **Memory footprint.** A full 3-D Swin requires ≈ 24 GB VRAM (RTX A5000) for 320×320×64 inputs. Smaller GPUs can run it by cropping or patch-wise inference.  
+* **Startup cost.** Loading weights and building window maps takes ~20 s, but *interactive refreshes stay in the millisecond range*.  
+* **Deployment trade-off.** Hospitals without high-end GPUs may prefer to run inference in the cloud or use mixed-precision to save memory.
+
+---
+
+In short, **iSegFormer** shows how a window-based Transformer plus a tiny decoder can deliver **high-precision, low-latency** 3-D interactive segmentation—provided that adequate GPU memory is available. It bridges human insight and AI speed, making cartilage delineation both faster and more reliable in daily clinical workflow.
 
     """, unsafe_allow_html=True)
 
