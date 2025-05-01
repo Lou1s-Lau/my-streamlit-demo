@@ -59,8 +59,22 @@ This human-in-the-loop process leverages the clinician’s anatomical knowledge�
 
 Below, **Figure 1** illustrates a tri-planar knee MRI whose cartilage–bone interfaces often have low contrast; interactive tools can delineate these structures more accurately than fully automated ones.
 
-""")
+    """, unsafe_allow_html=True) # Keep unsafe_allow_html=True if you have specific HTML needs, otherwise it might be optional.
 
+    # Assuming load_asset function loads and displays the image
+    # load_asset("mri_example.jpg", caption="Figure 1: Tri-planar MRI of the Knee")
+    load_asset("mri_example.jpg", caption="Figure 1: Tri-planar MRI of the Knee")
+    st.markdown("""
+**Figure 1: Tri‑planar MRI of the Knee**
+
+This composite image shows three standard MRI views of the knee:
+
+1. **Axial Plane (left):** A horizontal slice through the femoral condyles and tibial plateau, highlighting cartilage surfaces, menisci, and potential meniscal tears.  
+2. **Coronal Plane (center):** A vertical, front‑to‑back view of the knee joint, ideal for assessing cartilage thickness, joint space narrowing, and medial/lateral compartment integrity.  
+3. **Sagittal Plane (right):** A side‑view slice that visualizes the anterior and posterior cruciate ligaments (ACL/PCL), femoral trochlea, and patellofemoral joint, critical for diagnosing ligament injuries and patellar tracking issues.
+
+These multi‑planar MRI images serve as the input for interactive segmentation models like iSegFormer and SimpleClick, enabling precise delineation of cartilage, menisci, and ligaments to support faster and more accurate clinical diagnosis.
+""")
 
 
 # 2. Background
