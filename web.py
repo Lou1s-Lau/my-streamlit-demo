@@ -189,7 +189,7 @@ In short, **iSegFormer** shows how a window-based Transformer plus a tiny decode
 
     # Assuming load_asset function loads and displays the image
     # load_asset("architecture.jpg", caption="Figure 3: iSegFormer Architecture")
-    load_asset("architecture.jpg", caption="Figure 3: iSegFormer Architecture")
+    load_asset("architecture.png", caption="Figure 3: iSegFormer Architecture")
     
 # 4. Interactive Demo
 elif page == "Interactive Demo":
