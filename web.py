@@ -146,36 +146,45 @@ elif page == "Background":
 elif page == "iSegFormer":
     st.title("iSegFormer: Interactive 3D Segmentation (Liu et al., MICCAI 2022)")
     st.markdown("""
-    The **iSegFormer** framework, presented by Liu et al. at the top-tier **MICCAI 2022** conference, represents a significant advancement in **interactive segmentation**, specifically designed for the complexities of **3D knee MRI scans**. Segmenting structures like cartilage in 3D MRI is challenging due to intricate surface curvatures, thin structures, and often indistinct boundaries where cartilage blends into adjacent tissues like bone or meniscus. Traditional 2D slice-by-slice methods often fail to capture the full 3D context, while fully automated 3D methods can struggle with accuracy, especially when training data is limited.
+    The **iSegFormer** framework, introduced by Liu et al. at **MICCAI 2022**, is an interactive-segmentation model tailored for **3-D knee MRI**. Cartilage in 3-D scans is thin, highly curved, and often merges visually with bone or meniscus, producing *fuzzy boundaries* that frustrate purely automatic methods. Slice-by-slice 2-D tools miss cross-slice context, while heavy 3-D networks demand large GPUs yet still falter on small datasets.
 
-    **Architectural Highlights:**
+---
 
-    iSegFormer tackles these challenges by intelligently combining cutting-edge deep learning components:
-    * **Hierarchical Swin Transformer Encoder:** Instead of a standard CNN, iSegFormer leverages the **Swin Transformer**. This architecture is particularly well-suited for medical images because it processes image data hierarchically (capturing features at different scales, similar to CNNs) but uses a shifted-window self-attention mechanism. This allows it to model **long-range dependencies** across the entire 3D volume more efficiently than standard Vision Transformers, capturing the global context crucial for understanding anatomical continuity across slices.
-    * **Lightweight MLP Decoder:** Complementing the powerful encoder is a simple, **lightweight Multi-Layer Perceptron (MLP) decoder**. The choice of a lightweight decoder is crucial for interactivity; it allows the model to **rapidly generate or update the segmentation mask** in response to user input without introducing significant computational delay during the interactive refinement process.
+### Architectural highlights  
 
-    **Interactive Mechanism and Efficiency:**
+* **Hierarchical Swin-Transformer encoder** — Swin splits a 3-D volume into small *windows* and runs self-attention inside each window; the windows then shift slightly (*shifted-window attention*) so neighboring windows also exchange information. This design captures **local detail and global context at once**.  
+* **Lightweight MLP decoder** — A tiny fully connected network (multi-layer perceptron) converts the encoder’s features back into a segmentation mask, keeping latency low during interactive updates.
 
-    The core idea behind iSegFormer's interactivity is **efficiency through sparse guidance**. Rather than requiring dense annotations or corrections on every slice, the clinician provides minimal input:
-    * The user typically provides **positive and negative clicks** on only a **few key slices** within the 3D volume where the initial automated segmentation might be inaccurate.
-    * The Swin Transformer's **global attention mechanism** then takes over. It effectively **propagates the contextual information** from these sparse user corrections throughout the interconnected 3D volume. A correction made on one slice informs the segmentation refinement on adjacent and even more distant slices, ensuring anatomical consistency.
+---
 
-    **Performance and Value Proposition:**
+### How the interaction works  
 
-    As demonstrated by Liu et al. (2022), this approach yields impressive results:
-    * It achieves high segmentation accuracy, with reported **Dice Similarity Coefficients (DSC) often exceeding 90%** for knee cartilage.
-    * Crucially, this accuracy is obtained with **minimal manual effort**, significantly reducing the clinician's interaction time compared to fully manual segmentation or slice-by-slice refinement.
-    * It shows that interactive methods can effectively **compensate for limited annotated training data**. By fine-tuning with just a small amount of interactive guidance, iSegFormer can reach accuracy levels comparable to or even exceeding fully automated models trained on larger datasets.
+> **Four-step loop**  
+> 1. The physician adds several **positive clicks** (🟢 inside cartilage) and **negative clicks** (🔴 outside cartilage).  
+> 2. Each click is encoded in an extra channel (foreground = 1, background = –1, elsewhere = 0) and concatenated to the MRI.  
+> 3. iSegFormer re-runs a forward pass in **< 5 ms on a single A40 GPU**, producing an updated 3-D mask.  
+> 4. The refined mask overlays the image in real time; the doctor repeats step 1 if further refinement is needed.
 
-    **Computational Considerations:**
+With this **sparse guidance**—often < 5 clicks in only a few key slices—the model quickly converges on a clinically usable contour.
 
-    Despite its effectiveness, iSegFormer highlights a common trade-off with advanced 3D transformer models:
-    * Processing entire 3D volumes with self-attention mechanisms is **computationally intensive**. It demands **substantial GPU memory**, often necessitating high-end graphics cards typically found in research settings rather than standard clinical workstations.
-    * The **model initialization time** can also be longer compared to simpler models.
-    * These resource requirements could pose a **barrier to widespread adoption** in routine clinical workflows, particularly in environments with limited computational infrastructure.
+---
 
-    In essence, iSegFormer showcases the power of Transformers for context-aware, interactive 3D segmentation, offering high accuracy with minimal user input, but its practical deployment requires careful consideration of the necessary hardware resources.
-    """, unsafe_allow_html=True)
+### Performance  
+
+* Public knee-cartilage datasets report **Dice similarity > 0.90** (Dice = 1 is perfect overlap).  
+* Minimal click effort yet near-expert accuracy.  
+* Fine-tuning with only a handful of annotated volumes outperforms many fully automatic baselines that use larger training sets.
+
+---
+
+### Practical requirements  
+
+A window-based Transformer over 3-D data is memory-hungry; the reference code uses an RTX A5000 (24 GB VRAM). Practical deployments may downsample, batch in patches, or offload inference to the cloud. Startup (loading weights, window mapping) takes ≈ 20–30 s, but **each subsequent interaction refreshes in milliseconds**, giving an almost live editing experience.
+
+---
+
+In short, iSegFormer shows that a **windowed Transformer + tiny decoder** can deliver **high-precision, low-latency** interactive 3-D segmentation—so long as sufficiently large GPUs are available—making it a viable tool for challenging musculoskeletal MRI cases.
+
 
     # Assuming load_asset function loads and displays the image
     # load_asset("architecture.jpg", caption="Figure 3: iSegFormer Architecture")
